@@ -28,6 +28,13 @@ if __name__ == "__main__":
 	# get the robot
 	robot = env.GetRobots()[0]
 
+	RaveInitialize()
+	RaveLoadPlugin('plannerplugin/build/plannerplugin')
+
+	jointnames =['']
+    robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])        
+
+
 	init_pose = [0,0,0,0,0,0]
 	left_footsteps = footsteps[0]
 	right_footsteps = footsteps[1]
