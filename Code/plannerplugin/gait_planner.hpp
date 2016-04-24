@@ -575,5 +575,3 @@ public:
 
 };
 
-
-//get nodes
