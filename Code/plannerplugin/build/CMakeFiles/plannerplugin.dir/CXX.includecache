@@ -6,11 +6,19 @@
 
 #IncludeRegexTransform: 
 
-/home/varun/MP550/Project/plannerplugin/plannerplugin.cpp
+/home/varun/MP550/Project/Walk_Planner/Code/plannerplugin/gait_planner.hpp
+vector
+-
+algorithm
+-
+
+/home/varun/MP550/Project/Walk_Planner/Code/plannerplugin/plannerplugin.cpp
 openrave/plugin.h
 -
 boost/bind.hpp
 -
+gait_planner.hpp
+/home/varun/MP550/Project/Walk_Planner/Code/plannerplugin/gait_planner.hpp
 
 /usr/local/include/openrave-0.9/openrave/collisionchecker.h
 

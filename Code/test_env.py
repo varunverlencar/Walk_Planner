@@ -52,12 +52,14 @@ if __name__ == "__main__":
 
     with env:
         jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
-        
+        [.5,-0.45,-0.1,-.1,-.45,0.65]
+        [.25,-0.15,-0.1,-.1,-.15,0.25]
         PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
+        PR2.SetDOFValues([.25,-0.15,-0.1,-.1,-.15,0.25],[0,1,2,3,4,5]) # set the first 4 dof values
         # print PR2.GetChain(manip.GetBase().GetIndex(),manip.GetEndEffector().GetIndex(),returnjoints=False)[1:]
         # PR2.SetActiveDOFValues([0,0,-1,-1,-.2,0])
-        manip = PR2.GetManipulator('foot')
-        print manip
+        # manip = PR2.GetManipulator('foot')
+        # print manip
         # print '\nRight foot at:',PR2.GetLinks()[0].GetTransform()[0:3,3]
         incollision = PR2.CheckSelfCollision()  
         if incollision:

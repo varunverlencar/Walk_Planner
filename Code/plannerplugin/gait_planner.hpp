@@ -193,9 +193,9 @@ public:
 		//euclidean distance wieghted
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
-		// float w[7] = {800.0, 600.0, 300.0, 100.0, 0.0, 5.0,};
-		float w[6] = {1,1,1,1,1,1};
-		// for (unsigned int i = 0;i<newconfig.size();++i)
+		float w[6] = {800.0, 600.0, 100.0, 100.0, 600.0, 800.0};
+		// float w[6] = {1,1,1,1,1,1};
+		for (unsigned int i = 0;i<newconfig.size();++i)
 		{
 			tempdist += w[i]*pow((newconfig[i] - existingNodeConfig[i]),2);
 		}

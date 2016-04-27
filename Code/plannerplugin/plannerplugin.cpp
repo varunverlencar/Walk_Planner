@@ -8,12 +8,12 @@ class plannermodule : public ModuleBase
 {
 public:
     plannermodule(EnvironmentBasePtr penv, std::istream& ss) : ModuleBase(penv) {
-        RegisterCommand("gaitplanner",boost::bind(&plannermodule::plannerCommand,this,_1,_2),
+        RegisterCommand("gaitplanner",boost::bind(&plannermodule::gaitplanner,this,_1,_2),
                         "This is an example command");
     }
     virtual ~plannermodule() {}
     
-    bool plannerCommand(std::ostream& sout, std::istream& sinput)
+    bool gaitplanner(std::ostream& sout, std::istream& sinput)
     {   
         EnvironmentBasePtr env;
         env = GetEnv();
