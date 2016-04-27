@@ -1,0 +1,221 @@
+<!-- RMR VVV VMK Walking Planning
+ 6 DOF Bounding Box Legchair Biped Robot
+ Successful kinematics but faulty self collision checking
+ -->
+<Robot name="Legchair-LeftBased"> 
+	
+ <KinBody>
+   <Body name="leftFoot" type="dynamic">
+	 <Translation>0 0 0.001</Translation>
+	 <Geom type="box" modifiable="false">
+	   <Translation>0 0 0.015</Translation>
+	   <Extents>0.35 0.015 0.015</Extents>
+	   <diffuseColor>0 0 0</diffuseColor>
+	 </Geom>
+	 
+	 <Geom type="box" modifiable="false">
+	   <Translation>0.335 -0.41 0.015</Translation>
+	   <Extents>0.015 0.395 0.015</Extents>
+	   <diffuseColor>0 0 0</diffuseColor>
+	 </Geom>
+	 <Geom type="box" modifiable="false">
+	   <Translation>-0.335 -0.41 0.015</Translation>
+	   <Extents>0.015 0.395 0.015</Extents>
+	   <diffuseColor>0 0 0</diffuseColor>
+	 </Geom>
+	 
+   </Body>
+   
+   
+   <Body name="leftShank" type="dynamic">
+	 <offsetfrom>leftFoot</offsetfrom>
+	 <Translation>0 0 0.695</Translation>
+	 
+	 <Geom type="box" modifiable="false">
+		 <Translation>0 0 -0.31</Translation>
+	   <Extents>0.013 0.11 0.29</Extents>
+	   
+	 </Geom>
+   </Body>
+   
+   <Body name="leftThigh" type="dynamic">
+	 <offsetfrom>leftShank</offsetfrom>
+	 <Translation>0 0 0.62</Translation>
+	 
+	 <Geom type="box" modifiable="false">
+		 <Translation>0 0 -0.31</Translation>
+	   <Extents>0.013 0.11 0.29</Extents>
+	 </Geom>
+   </Body>
+   
+
+   
+
+   
+   <Body name="chair" type="dynamic">
+	 <offsetfrom>leftThigh</offsetfrom>
+	 <Translation>0 -0.92 0</Translation>
+	 
+	 <Geom type="box" modifiable="false">
+	   <Translation>0 0.92 0.31</Translation>
+	   <Extents>0.013 0.11 0.29</Extents>
+	   
+	 </Geom>
+	 <Geom type="box" modifiable="false">
+	   <Translation>0 0.0 0.31</Translation>
+	   <Extents>0.013 0.11 0.29</Extents>
+	   
+	 </Geom>
+	 <Geom type="box" modifiable="false">
+	   <Translation>0.05 0.46 0.2497</Translation>
+	   <Extents>0.15 0.35 0.40</Extents>
+	   <diffuseColor>0 1 0</diffuseColor>
+	 </Geom>
+	 
+	 <Geom type="box" modifiable="false">
+	   <Translation>0.41 0.46 -0.035</Translation>
+	   <Extents>0.21 0.35 0.115</Extents>
+	   <diffuseColor>0 1 0</diffuseColor>
+	 </Geom>
+	 
+	 <Geom type="box" modifiable="false">
+	   <Translation>0.834 0.46 -0.232859396</Translation> 
+	   <rotationaxis>0 1 0 45</rotationaxis> 
+	   <Extents>0.37245 0.35 0.07</Extents>
+	   <diffuseColor>0 1 0</diffuseColor>
+	 </Geom>
+	 
+   </Body>
+   
+   <Body name="rightThigh" type="dynamic">
+	 <offsetfrom>chair</offsetfrom>
+	 <Translation>0 0 -0.62</Translation>
+	 <Geom type="box" modifiable="false">
+		 <Translation>0 0 0.31</Translation>
+	   <Extents>0.013 0.11 0.29</Extents>
+	 </Geom>
+   </Body>
+   
+   <Body name="rightShank" type="dynamic">
+	 <offsetfrom>rightThigh</offsetfrom>
+	 <Translation>0 0 -0.62</Translation>
+	 <Geom type="box" modifiable="false">
+		 <Translation>0 0 0.31</Translation>
+	   <Extents>0.013 0.11 0.29</Extents>
+	 </Geom>
+   </Body>
+   
+   <Body name="rightFoot" type="dynamic">
+	 <offsetfrom>rightShank</offsetfrom>
+	 <Translation>0.0  0.0  -0.074</Translation>
+	 <Geom type="box" modifiable="false">
+	   <Translation>0 0 0.015</Translation>
+	   <Extents>0.35 0.015 0.015</Extents>
+	   <diffuseColor>0 0 0</diffuseColor>
+	 </Geom>
+	 
+	 <Geom type="box" modifiable="false">
+	   <Translation>0.335 0.41 0.015</Translation>
+	   <Extents>0.015 0.395 0.015</Extents>
+	   <diffuseColor>0 0 0</diffuseColor>
+	 </Geom>
+	 <Geom type="box" modifiable="false">
+	   <Translation>-0.335 0.41 0.015</Translation>
+	   <Extents>0.015 0.395 0.015</Extents>
+	   <diffuseColor>0 0 1</diffuseColor>
+	 </Geom>
+	 
+   </Body>
+   
+   
+  
+   
+   
+   
+   
+   <!-- Joints -->
+   <Joint circular="true" name="leftAnkle" type="hinge">
+	 <Body>leftFoot</Body>
+	 <Body>leftShank</Body>
+	 <offsetfrom>leftFoot</offsetfrom>
+	 <weight>4</weight>
+	 <limitsdeg>-45 45</limitsdeg>
+	 <axis>0 1 0</axis>
+	 <maxvel>3</maxvel>
+	 <resolution>1</resolution>
+   </Joint>
+   
+   
+   
+   <Joint circular="false" name="leftKnee" type="hinge">
+	 <Body>leftShank</Body>
+	 <Body>leftThigh</Body>
+	 <offsetfrom>leftShank</offsetfrom>
+	 <weight>4</weight>
+	 <limitsdeg>-90 0</limitsdeg>
+	 <axis>0 1 0</axis>
+	 <maxvel>3</maxvel>
+	 <resolution>1</resolution>
+   </Joint>
+   
+   
+   <Joint circular="true" name="leftHip" type="hinge">
+	 <Body>leftThigh</Body>
+	 <Body>chair</Body>
+	 <offsetfrom>leftThigh</offsetfrom>
+	 <weight>4</weight>
+	 <limitsdeg>-90 90</limitsdeg>
+	 <axis>0 1 0</axis>
+	 <maxvel>3</maxvel>
+	 <resolution>1</resolution>
+   </Joint>
+   
+   
+   
+   <Joint circular="true" name="rightHip" type="hinge">
+	 <Body>chair</Body>
+	 <Body>rightThigh</Body>
+	 <offsetfrom>chair</offsetfrom>
+	 <weight>4</weight>
+	 <limitsdeg>90 -90</limitsdeg>
+	 <axis>0 1 0</axis>
+	 <maxvel>3</maxvel>
+	 <resolution>1</resolution>
+   </Joint>
+   
+   
+   
+   <Joint circular="true" name="rightKnee" type="hinge">
+	 <Body>rightThigh</Body>
+	 <Body>rightShank</Body>
+	 <offsetfrom>rightThigh</offsetfrom>
+	 <weight>4</weight>
+	 <limitsdeg>0 90</limitsdeg>
+	 <axis>0 1 0</axis>
+	 <maxvel>3</maxvel>
+	 <resolution>1</resolution>
+   </Joint>
+   
+  
+   
+   <Joint circular="true" name="rightAnkle" type="hinge">
+	 <Body>rightShank</Body>
+	 <Body>rightFoot</Body>
+	 <offsetfrom>rightShank</offsetfrom>
+	 <weight>4</weight>
+	 <limitsdeg>45 -45</limitsdeg>
+	 <axis>0 1 0</axis>
+	 <maxvel>3</maxvel>
+	 <resolution>1</resolution>
+   </Joint>
+   
+   
+  </KinBody>
+  
+  
+  <Manipulator name="foot">
+ <base>leftFoot</base> 
+ <effector>rightFoot</effector> 
+ <!-- <iksolver>ik 0.05</iksolver>  -->
+</Manipulator>
+ </Robot>
