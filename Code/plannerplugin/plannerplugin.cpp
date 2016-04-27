@@ -26,12 +26,12 @@ public:
         std::vector<float> startconfig;
         std::vector<float> goalconfig;
 
-        for(int i=0; i<7; i++){
+        for(int i=0; i<6; i++){
             sinput >> start;
             startconfig.push_back(start);
         }
         
-        for(int i=0; i<7; i++){
+        for(int i=0; i<6; i++){
             sinput >> goal;
             goalconfig.push_back(goal);
         }

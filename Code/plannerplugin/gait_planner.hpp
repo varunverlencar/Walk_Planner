@@ -193,9 +193,9 @@ public:
 		//euclidean distance wieghted
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
-		float w[7] = {800.0, 600.0, 300.0, 100.0, 0.0, 5.0, 0.0};
-		// float w[7] = {1,1,1,1,1,1,1};
-		for (unsigned int i = 0;i<newconfig.size();++i)
+		// float w[7] = {800.0, 600.0, 300.0, 100.0, 0.0, 5.0,};
+		float w[6] = {1,1,1,1,1,1};
+		// for (unsigned int i = 0;i<newconfig.size();++i)
 		{
 			tempdist += w[i]*pow((newconfig[i] - existingNodeConfig[i]),2);
 		}
@@ -211,7 +211,7 @@ public:
 		std::vector<float> sampleconfig;
 		// NodeTree* p = new NodeTree();
 
-		for (int i=0;i<7;i++){		
+		for (int i=0;i<6;i++){		
 			sampleconfig.push_back(0);
 		}
 
@@ -229,7 +229,7 @@ public:
 			std::cout<<"Getting Random Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(false);
 			goalflag =false;
-			for (int i = 0; i < 7; ++i){
+			for (int i = 0; i < 6; ++i){
 				sampleconfig[i]=((rand() * (upper[i]-lower[i]))/(float)RAND_MAX) + lower[i];
 			}	
 
@@ -285,7 +285,7 @@ public:
 			if (ndist > stepsize){
 				std::cout<<"Step:"<<itr<<std::endl;
 
-				for(int i = 0; i < 7; ++i){
+				for(int i = 0; i < 6; ++i){
 					unitConfig.push_back((targetConfig[i] - nearestNodeConfig[i])/ndist);
 					nearestNodeConfig[i] += stepsize * unitConfig[i]; // find unit vector
 				}
@@ -429,8 +429,8 @@ public:
 		goalflag = false;
 
 		std::vector<float>::const_iterator it;
-		std::cout<<std::endl<<"Given:"<<std::endl<<"Goal:"<<goal[0]<<","<<goal[1]<<","<<goal[2]<<","<<goal[3]<<","<<goal[4]<<","<<goal[5]<<","<<goal[6]<<std::endl;
-		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<","<<start[6]<<std::endl;
+		std::cout<<std::endl<<"Given:"<<std::endl<<"Goal:"<<goal[0]<<","<<goal[1]<<","<<goal[2]<<","<<goal[3]<<","<<goal[4]<<","<<goal[5]<<std::endl;
+		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<std::endl;
 
 
 		for (int i=0; i<10000;++i){
@@ -442,7 +442,7 @@ public:
 				nearestNode = initPath->nearestNeighbour(sampledNode);
 
 				std::vector<float> nn(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
-				std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<","<<nn[6]<<"]"<<std::endl;
+				std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<"]"<<std::endl;
 				// std::cout<<"Nearest Node found..."<<std::endl;
 				
 				path = initPath->connectNodes(sampledNode, nearestNode, goalNode,initPath->stepSize(),env,robot);
