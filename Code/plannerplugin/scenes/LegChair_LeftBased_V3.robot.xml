@@ -139,7 +139,7 @@
 	 <Body>leftShank</Body>
 	 <offsetfrom>leftFoot</offsetfrom>
 	 <weight>4</weight>
-	 <limitsdeg>-45 45</limitsdeg>
+	 <limitsdeg>-0.786 0.786</limitsdeg>
 	 <axis>0 1 0</axis>
 	 <maxvel>3</maxvel>
 	 <resolution>1</resolution>
@@ -152,7 +152,7 @@
 	 <Body>leftThigh</Body>
 	 <offsetfrom>leftShank</offsetfrom>
 	 <weight>4</weight>
-	 <limitsdeg>-90 0</limitsdeg>
+	 <limitsdeg>-1.57 0</limitsdeg>
 	 <axis>0 1 0</axis>
 	 <maxvel>3</maxvel>
 	 <resolution>1</resolution>
@@ -164,7 +164,7 @@
 	 <Body>chair</Body>
 	 <offsetfrom>leftThigh</offsetfrom>
 	 <weight>4</weight>
-	 <limitsdeg>-90 90</limitsdeg>
+	 <limitsdeg>-1.57 1.57</limitsdeg>
 	 <axis>0 1 0</axis>
 	 <maxvel>3</maxvel>
 	 <resolution>1</resolution>
@@ -177,7 +177,7 @@
 	 <Body>rightThigh</Body>
 	 <offsetfrom>chair</offsetfrom>
 	 <weight>4</weight>
-	 <limitsdeg>90 -90</limitsdeg>
+	 <limitsdeg>1.57 -1.57</limitsdeg>
 	 <axis>0 1 0</axis>
 	 <maxvel>3</maxvel>
 	 <resolution>1</resolution>
@@ -190,7 +190,7 @@
 	 <Body>rightShank</Body>
 	 <offsetfrom>rightThigh</offsetfrom>
 	 <weight>4</weight>
-	 <limitsdeg>0 90</limitsdeg>
+	 <limitsdeg>0 1.57</limitsdeg>
 	 <axis>0 1 0</axis>
 	 <maxvel>3</maxvel>
 	 <resolution>1</resolution>
@@ -203,7 +203,7 @@
 	 <Body>rightFoot</Body>
 	 <offsetfrom>rightShank</offsetfrom>
 	 <weight>4</weight>
-	 <limitsdeg>45 -45</limitsdeg>
+	 <limitsdeg>0.786 -0.786</limitsdeg>
 	 <axis>0 1 0</axis>
 	 <maxvel>3</maxvel>
 	 <resolution>1</resolution>

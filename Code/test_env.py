@@ -35,7 +35,11 @@ if __name__ == "__main__":
     # 1) get the 1st robot that is inside the loaded scene
     # 2) assign it to the variable named 'robot'
     PR2 = env.GetRobots()[0]
-
+    env.Remove(PR2)
+    robot2 = env.ReadRobotXMLFile('plannerplugin/scenes/LegChair_RightBased_V3.robot.xml')
+    env.Add(robot2)
+# 
+    PR2 =robot2
     # tuck in the PR2's arms for driving
     # tuckarms(env,PR2);
 
@@ -52,18 +56,18 @@ if __name__ == "__main__":
 
     with env:
         jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
-        [.5,-0.45,-0.1,-.1,-.45,0.65]
-        [.25,-0.15,-0.1,-.1,-.15,0.25]
+        # [.5,-0.45,-0.1,-.1,-.45,0.65]
+        # [.25,-0.15,-0.1,-.1,-.15,0.25]
         PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
-        PR2.SetDOFValues([.25,-0.15,-0.1,-.1,-.15,0.25],[0,1,2,3,4,5]) # set the first 4 dof values
+        PR2.SetDOFValues([.25,-.5,-0.5,0.5,.5,0.25],[0,1,2,3,4,5]) # set the first 4 dof values
         # print PR2.GetChain(manip.GetBase().GetIndex(),manip.GetEndEffector().GetIndex(),returnjoints=False)[1:]
         # PR2.SetActiveDOFValues([0,0,-1,-1,-.2,0])
         # manip = PR2.GetManipulator('foot')
         # print manip
-        # print '\nRight foot at:',PR2.GetLinks()[0].GetTransform()[0:3,3]
-        incollision = PR2.CheckSelfCollision()  
-        if incollision:
-            print '\ncollision!!\n'
+        print '\nRight foot at:',PR2.GetTransform()[1:4,0]
+        # incollision = PR2.CheckSelfCollision()  
+        # if incollision:
+        #     print '\ncollision!!\n'
     # with env:
     #     jointnames = ['l_shoulder_pan_joint','l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint']
     #     PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
@@ -76,7 +80,7 @@ if __name__ == "__main__":
     #         if incollision:
     #             print '\ncollision!!\n'
     
-
+    env.UpdatePublishedBodies() 
     # basemanip.MoveActiveJoints(goal=[1.4,-2.32099996,-0.69800004],maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(PR2)
     # env.UpdatePublishedBodies() # allow viewer to update new robot

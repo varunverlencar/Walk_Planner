@@ -193,7 +193,7 @@ public:
 		//euclidean distance wieghted
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
-		float w[6] = {800.0, 600.0, 100.0, 100.0, 600.0, 800.0};
+		float w[6] = {100.0, 600.0, 100.0, 100.0, 600.0, 100.0};
 		// float w[6] = {1,1,1,1,1,1};
 		for (unsigned int i = 0;i<newconfig.size();++i)
 		{
@@ -218,7 +218,7 @@ public:
 		float r = rand()/(float)RAND_MAX; //  r is between 0 and 1 since we normalize it
 		std::cout<<"random r:"<<r<<std::endl;
 
-		if (r < 0.26) {//p->goalBias()
+		if (r < 0.26){//p->goalBias()
 			std::cout<<"Goal as Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(true);
 			goalflag=true;
@@ -479,8 +479,16 @@ public:
 		std::cout<<" initPath Size..."<<initPath->sizeNodes()<<std::endl;
 
 		std::cout<<" FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
-		
-		return finalPath;
+
+		// std::vector<float> temp,pathConfigstemp;
+		// for( int i=Final_Path->sizeNodes()-1;i>-1;i--)
+  //       {
+  //           temp.assign(Final_Path->getNodes(i)->getConfig().begin(),Final_Path->getNodes(i)->getConfig().end());
+  //           pathConfigstemp.push_back(temp[i]);
+  //       }
+
+  //       smoothpath(pathConfigstemp, 0.25, 
+		// return finalPath;
 	}
 
 // 	//////////////////////// Shortcut smoothing to smooth the rrt path ////////////////////

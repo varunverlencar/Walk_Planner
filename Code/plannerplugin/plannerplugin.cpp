@@ -16,11 +16,16 @@ public:
     bool gaitplanner(std::ostream& sout, std::istream& sinput)
     {   
         EnvironmentBasePtr env;
+        bool rflag = true;
         env = GetEnv();
         RobotBasePtr robot;
         std::vector<RobotBasePtr> pr2;
         env->GetRobots(pr2);
         robot = pr2[0];
+        robot1 = pr2[0];
+        robot2 = pr2[1];
+
+        
         
         float start, goal, goalbias=0.25;
         std::vector<float> startconfig;
@@ -36,6 +41,12 @@ public:
             goalconfig.push_back(goal);
         }
 
+        sinput >> rflag;
+        if flag
+            robot = robot1
+        else
+            robot = robot2
+        
         std::vector<int> indices;
         std::vector<OpenRAVE::dReal> upperlimit,lowerlimit;
         
