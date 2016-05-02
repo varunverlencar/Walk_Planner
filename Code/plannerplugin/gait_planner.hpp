@@ -66,7 +66,7 @@ public:
 	{
 		//default values
 		_numNodes = 1;
-		setStepSize(0.25);
+		setStepSize(0.05);
 		// setGoalBias(0.26); // value between 0 and 1
 		setMaxIterations(10000);
 		setErrorFactor(1);
@@ -76,7 +76,7 @@ public:
 	{
 		_nodes.push_back(start);
 		_numNodes = 1;
-		setStepSize(0.25);
+		setStepSize(0.05);
 		// setGoalBias(0.26); // value between 0 and 1
 		setMaxIterations(10000);
 		setErrorFactor(1);
@@ -193,7 +193,7 @@ public:
 		//euclidean distance wieghted
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
-		// float w[6] = {100.0, 200.0, 100.0, 100.0, 200.0, 0};
+		// float w[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0};
 		float w[6] = {1,1,1,1,1,1};
 		for (unsigned int i = 0;i<newconfig.size();++i)
 		{
@@ -353,7 +353,7 @@ public:
 				}
 			}
 			// if the distance within the goal threashold range
-			else if(ndist <= 1.0) //q->errorfactor()
+			else if(ndist <= 0.5) //q->errorfactor()
 			{	
 				std::cout<<std::endl<<"..Step :"<<itr<<"->inside epsilon "<<std::endl;
 				//if the distance is very close
@@ -463,11 +463,7 @@ public:
 				// std::cout<<"found found..."<<std::endl;
 				initPath->addNodeTree(path);
 				std::cout<<"...Final..."<<std::endl;
-				
-				for(it=path->lastNode()->getConfig().begin(); it!=path->lastNode()->getConfig().end(); ++it){
-					std::cout<<"final Node:"<<(*it)<<std::endl;
-				}
-				
+											
 				break;
 			}
 			else{
@@ -483,15 +479,20 @@ public:
 
 		std::cout<<" FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
 
+		for(it=finalPath->lastNode()->getConfig().begin(); it!=finalPath->lastNode()->getConfig().end(); ++it){
+					std::cout<<"final Node:"<<(*it)<<std::endl;
+				}
+
 		std::vector<float> temp;
 		std::vector<std::vector<float> > finalpathconfig,_final_path,smoothened;
+
 		for( int i=finalPath->sizeNodes()-1;i>-1;i--)
 		{
 			temp.assign(finalPath->getNodes(i)->getConfig().begin(),finalPath->getNodes(i)->getConfig().end());
 			finalpathconfig.push_back(temp);
 		}
 
-		reverse(finalpathconfig.begin(),finalpathconfig.end());
+		// reverse(finalpathconfig.begin(),finalpathconfig.end());
 		// full_path.reserve( source_path.size() + dest_path.size() ); // preallocate memory
 		// full_path.insert( full_path.end(), source_path.begin(), source_path.end() );
 		// full_path.insert( full_path.end(), dest_path.begin(), dest_path.end() );
@@ -518,7 +519,7 @@ public:
 
 	std::vector< std::vector<float> > smoothpath(std::vector< std::vector<float> > path_smoothened, float stepsize,OpenRAVE::EnvironmentBasePtr& env,OpenRAVE::RobotBasePtr& robot)
 	{
-		int hi, ran1, ran2, p1, p2, collided =0;
+		int hi, ran1, ran2, p1, p2, collided;
 		std::vector<float>  v1, v2, inter;
 		std::vector< std::vector<float> > bypass;
 		std::vector< std::vector<float> >::iterator it;
@@ -526,7 +527,7 @@ public:
 		// NodeTree* inter = new NodeTree();
 
 
-		for(int i=0; i<200; i++){
+		for(int i=0; i<10; i++){
 			hi =path_smoothened.size();
 			ran1 = rand()%hi;
 			ran2 = rand()%hi;
@@ -582,7 +583,7 @@ public:
 
 	float stepSize() const {return _stepSize;}
 
-	void setStepSize(float stepSize = 0.25) {_stepSize = stepSize;}
+	void setStepSize(float stepSize = 0.05) {_stepSize = stepSize;}
 
 	float errorfactor() const {return _errorfactor;}
 
@@ -605,8 +606,7 @@ public:
 	RRTNode* lastNode() const {
 		if (_nodes.empty()) 
 			return NULL;
-
-	return _nodes.back();
+		return _nodes.back();
 	}
 
 };

@@ -38,6 +38,7 @@ if __name__ == "__main__":
     # env.Remove(PR2)
     robot2 = env.ReadRobotXMLFile('plannerplugin/scenes/LegChair_RightBased_V3.robot.xml')
     env.Add(robot2)
+    # robot3 = 
 # 
     PR22 =robot2
     # tuck in the PR2's arms for driving
@@ -62,26 +63,52 @@ if __name__ == "__main__":
         # print manip
         # print manip.GetTransform()
         indices = [PR2.GetJoint(name).GetDOFIndex() for name in jointnames]
-        print indices
+        # print indices
         PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
-        PR2.SetDOFValues([.5,-0.45,-0.1,-.1,-.45,0.65],indices) # set the first 6 dof values
-        
-        
+        PR2.SetDOFValues([.3,-0.35,-0.17,-.17,.35,0.05],indices) # set the first 6 dof values
+        # PR2.GetLinks()[0].SetTransform()
+        # print PR2.GetLinks()[0].GetTransform()
+        TR = PR2.GetManipulator('foot').GetTransform()[0:4,3]
+        print TR
+        T = PR22.GetTransform()[0:4,0:4]
+        T[0,3] = TR[0]
+        T[1,3] = TR[1]
+        T[2,3] = TR[2]
+        T[3,3] = TR[3]
+        # env.Remove(PR2)
+        # arr =numpy.dot(matrixFromPose([1,0,0,0,T[0,4],T[1,4],T[1]])
+        jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
+        indices = [PR22.GetJoint(name).GetDOFIndex() for name in jointnames]
+        # print indices
         PR22.SetActiveDOFs([PR22.GetJoint(name).GetDOFIndex() for name in jointnames])
-        T = PR2.GetManipulator('foot').GetTransform()[0:3,4]
-        arr =numpy.dot(matrixFromPose([1,0,0,0,1,0,0])
+        # PR22.SetTranslation3D(T)
+        PR22.SetTransform(T)
+        PR22.SetDOFValues([-0.05,-0.35,0.17,.17,.35,-0.3],indices)
 
-        PR22.SetTransform(arr,PR2.GetTransform())
-        PR22.SetDOFValues([0,0,0,0,0,0],indices)
+        TR = PR22.GetManipulator('foot').GetTransform()[0:4,3]
+        # print TR
+        T = PR2.GetTransform()[0:4,0:4]
+        T[0,3] = TR[0]
+        T[1,3] = TR[1]
+        T[2,3] = TR[2]
+        T[3,3] = TR[3]
+
+        PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
+        # PR22.SetTranslation3D(T)
+        PR2.SetTransform(T)
+        PR2.SetDOFValues([.3,-0.35,-0.17,-.17,.35,0.05],indices)
 
         # print PR2.GetChain(manip.GetBase().GetIndex(),manip.GetEndEffector().GetIndex(),returnjoints=False)[1:]
         # PR2.SetActiveDOFValues([0,0,-1,-1,-.2,0])
         # manip = PR2.GetManipulator('foot')
         # print manip
         # print '\nRight foot at:',PR2.GetTransform()[1:4,0]
-        # incollision = PR2.CheckSelfCollision()  
-        # if incollision:
-        #     print '\ncollision!!\n'
+        incollision = PR2.CheckSelfCollision()  
+        if incollision:
+            print '\n1collision!!\n'
+        incollision = PR22.CheckSelfCollision()  
+        if incollision:
+            print '\n2collision!!\n'
     # with env:
     #     jointnames = ['l_shoulder_pan_joint','l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint']
     #     PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])

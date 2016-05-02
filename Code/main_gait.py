@@ -70,9 +70,11 @@ if __name__ == "__main__":
 	active_foot = None
 	next_foot = 5
 	flag = True
-	zp = 1
+	zp = 2
 	# robot.SetActiveManipulator()
 	T = robot.GetTransform() 
+	TR = T[0:4,3]
+	# TR = robot.GetManipulator('foot').GetTransform()[0:4,3]
 
 	# for i in range(len(left_footsteps)):
 	# ########### Find IK solution #############
@@ -128,54 +130,71 @@ if __name__ == "__main__":
 	## stride = gaitplanner(init_pose,goal_footsteps)
 	## planned_gait.append(stride)
 	
-	# goalconfig = [[.5,-0.45,-0.1,-.1,-.45,0.65]]
-	# startconfig = [[0,0,0,0,0,0]]
+	goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
+	startconfig = [[0,0,0,0,0,0]]
 	
 
-	goalconfig = [[.5,-0.45,-0.1,-.1,-.45,0.65],[.5,-0.45,-0.1,-.1,-.45,0.65],[.5,-0.45,-0.1,-.1,-.45,0.65],[.5,-0.45,-0.1,-.1,-.45,0.65]]
-	startconfig = [[0,0,0,0,0,0],[.5,-0.45,-0.1,-.1,-.45,0.65],[.5,-0.45,-0.1,-.1,-.45,0.65],[.5,-0.45,-0.1,-.1,-.45,0.65]]
+	# goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3]]
+	# startconfig = [[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05]]
 	plannermodule = RaveCreateModule(env,'plannermodule')
 	# i =0
 	for m in range(0,len(goalconfig)):
 		
-		with env:			
+		with env:
+			robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])  #set all dofs active      
+			# startconfig[m] = 	
 			if flag:
-				robot = robot1
-				if next_foot ==0:
-					env.Remove(robot2)
+				robot = robot1				
+				if zp !=1:
 					env.Add(robot)
-				flag = False				
-				next_foot = 5
-				# if zp==1:
+					zp =1
+				# T = robot.GetTransform()[0:4,0:4]
+				T[0,3] = TR[0]
+				T[1,3] = TR[1]
+				T[2,3] = TR[2]
+				T[3,3] = TR[3]
 				# 	ar = Tr
 				# 	y = .92
 				# 	z = 0.076
 				# 	zp =2
 				# else:
+
 				# 	ar= Tr[0:3,3]
+				# TR = PR22.GetManipulator('foot').GetTransform()[0:4,3]
+				# robot.SetTransform(T)
+					
 				robot.SetTransform(T)
-					# robot.SetTransform(numpy.dot(matrixFromPose([1,0,0,0,ar[0]+anew[1],ar[1]+0.92,ar[2]-0.076]),robot.GetTransform()))
+				if next_foot ==0:
+					env.Remove(robot2)					
+				flag = False				
+				next_foot = 5
+							# robot.SetTransform(numpy.dot(matrixFromPose([1,0,0,0,ar[0]+anew[1],ar[1]+0.92,ar[2]-0.076]),robot.GetTransform()))
 			else:
 				robot = robot2
-				flag = True
+				
 				if next_foot ==5:
 					env.Remove(robot1)
 					env.Add(robot)
+				flag = True
 				next_foot = 0
 				# ar= Tr[0:3,3]
+				T = robot.GetTransform()[0:4,0:4]
+				T[0,3] = TR[0]
+				T[1,3] = TR[1]
+				T[2,3] = TR[2]
+				T[3,3] = TR[3]
 				robot.SetTransform(T)
 				# robot.SetTransform(numpy.dot(matrixFromPose([1,0,0,0,ar[0]+anew[1],ar[1]-0.92,ar[2]+0.076]),robot.GetTransform()))
 
 			
 			
 
-			robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])  #set all dofs active      
 			robot.SetActiveDOFValues(startconfig[m]);
 
-			env.UpdatePublishedBodies() 
+			# env.UpdatePublishedBodies() 
 
 			# [.25,-0.15,-0.1,-.1,-.15,0.25]
-			initConfig = goalconfig[m] + startconfig[m]
+			initConfig =  startconfig[m]+goalconfig[m] 
 			a = time.time()
 			print "Planning Started"
 			path = plannermodule.SendCommand('gaitplanner %f %f %f %f %f %f %f %f %f %f %f %f flag'%tuple(initConfig))
@@ -198,12 +217,12 @@ if __name__ == "__main__":
 				for i in range(0,len(nodes)-1):
 					d = nodes[i].split()
 					_unsmoothPath.append([float(x) for x in d])
-					# for x in d:
-					#     print x,","
-					# print "\n"
+					for x in d:
+					    print x,","
+					print "\n"
 
 			print 'Smooth length',len(_unsmoothPath)
-			      
+			
 			lowerlimit,upperlimit = robot.GetDOFLimits(indices)
 			lowerlimit = lowerlimit * 3.1457/180.0
 			upperlimit = upperlimit * 3.1457/180.0
@@ -224,10 +243,10 @@ if __name__ == "__main__":
 				robot.SetDOFValues(arr,indices)
 				pt=robot.GetLinks()[next_foot].GetTransform()[0:3,3]
 				handles1.append(env.plot3(pt,pointsize=0.03,colors=array(((0,0,1))),drawstyle=1))
-			env.UpdatePublishedBodies() 
+			# env.UpdatePublishedBodies() 
 
 
-			anew= robot.GetTransform()[0:3,3]
+			# anew= robot.GetTransform()[0:3,3]
 			traj = RaveCreateTrajectory(env,'')
 			traj.Init(robot.GetActiveConfigurationSpecification())
 
@@ -236,11 +255,11 @@ if __name__ == "__main__":
 
 			planningutils.RetimeActiveDOFTrajectory(traj,robot,hastimestamps=False,maxvelmult=1)
 			print 'duration',traj.GetDuration()
-			
+			TR = robot.GetManipulator('foot').GetTransform()[0:4,3]
 		robot.GetController().SetPath(traj)
 		robot.WaitForController(0)
 		# Tr = robot.GetTransform()
-		T = robot.GetManipulator('foot').GetTransform()
+		
 
 		### END OF YOUR CODE ###
 	waitrobot(robot)
