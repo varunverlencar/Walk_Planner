@@ -25,7 +25,7 @@
 	 <Geom type="box" modifiable="false">
 	   <Translation>-0.335 0.41 0.015</Translation>
 	   <Extents>0.015 0.395 0.015</Extents>
-	   <diffuseColor>0 0 1</diffuseColor>
+	   <diffuseColor>0 0 0</diffuseColor>
 	 </Geom>
 	 
    </Body>
@@ -118,7 +118,7 @@
 	 <Geom type="box" modifiable="false">
 	   <Translation>0.335 -0.41 0.015</Translation>
 	   <Extents>0.015 0.395 0.015</Extents>
-	   <diffuseColor>0 0 0</diffuseColor>
+	   <diffuseColor>0 0 1</diffuseColor>
 	 </Geom>
 	 
 	 <Geom type="box" modifiable="false">

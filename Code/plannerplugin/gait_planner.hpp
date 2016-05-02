@@ -193,8 +193,8 @@ public:
 		//euclidean distance wieghted
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
-		float w[6] = {100.0, 600.0, 100.0, 100.0, 600.0, 100.0};
-		// float w[6] = {1,1,1,1,1,1};
+		// float w[6] = {100.0, 200.0, 100.0, 100.0, 200.0, 0};
+		float w[6] = {1,1,1,1,1,1};
 		for (unsigned int i = 0;i<newconfig.size();++i)
 		{
 			tempdist += w[i]*pow((newconfig[i] - existingNodeConfig[i]),2);
@@ -209,7 +209,7 @@ public:
 	{	
 		// std::cout<<"Entered Sampling..."<<std::endl;
 		std::vector<float> sampleconfig;
-		// NodeTree* p = new NodeTree();
+		NodeTree* p = new NodeTree();
 
 		for (int i=0;i<6;i++){		
 			sampleconfig.push_back(0);
@@ -218,7 +218,7 @@ public:
 		float r = rand()/(float)RAND_MAX; //  r is between 0 and 1 since we normalize it
 		std::cout<<"random r:"<<r<<std::endl;
 
-		if (r < 0.26){//p->goalBias()
+		if (r < p->goalBias()){//p->goalBias()
 			std::cout<<"Goal as Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(true);
 			goalflag=true;
@@ -230,7 +230,7 @@ public:
 			// p->setgoalflag(false);
 			goalflag =false;
 			for (int i = 0; i < 6; ++i){
-				sampleconfig[i]=((rand() * (upper[i]-lower[i]))/(float)RAND_MAX) + lower[i];
+				sampleconfig[i]=(((rand() * (upper[i]-lower[i]))/(float)RAND_MAX) + lower[i])*3.1457/180.00;
 			}	
 
 		RRTNode* RandNode = new RRTNode(sampleconfig);
@@ -250,8 +250,10 @@ public:
 		// float lolimit={-0.564602,-0.3536,-2.12131,-0.650001,-10000,-2.00001,-10000};
 		// float uplimit ={2.13539,1.2963,-0.15,3.75,10000,-0.1,1000};
 
-		if(collision||selfcollision)
+		if(collision)
 			std::cout<<"Collision!"<<std::endl;
+		else if (selfcollision)
+			std::cout<<"Self Collision!"<<std::endl;
 		return (collision||selfcollision);
 	}
 
@@ -273,7 +275,7 @@ public:
 		RRTNode* currentNode;
 		RRTNode* prevNode = nearestNode;
 
-		for (int itr=0; itr<10000; ++itr){ // avoid infinite loops, change as required
+		for (int itr=0; itr<100; ++itr){ // avoid infinite loops, change as required
 			std::cout<<std::endl<<"Enter connectloop... iteration"<<itr<<std::endl;
 			std::vector<float>::const_iterator it;
 			std::vector<float> prevConfig(nearestNodeConfig.begin(),nearestNodeConfig.end());
@@ -413,7 +415,8 @@ public:
 
 	///////////////////// Grow RRT tree /////////////////////
 
-	NodeTree* rrtgrow(const std::vector<float> &start,const std::vector<float> &goal,float goalbias,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot)
+
+	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start,const std::vector<float> &goal,float goalbias,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot)
 	{
 		RRTNode* startNode = new RRTNode(start);
 		RRTNode* goalNode = new RRTNode(goal);
@@ -433,7 +436,7 @@ public:
 		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<std::endl;
 
 
-		for (int i=0; i<10000;++i){
+		for (int i=0; i<1000;++i){
 			std::cout<<std::endl<<"RRT-iteration"<<i<<std::endl;
 			
 			RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode);
@@ -480,63 +483,88 @@ public:
 
 		std::cout<<" FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
 
-		// std::vector<float> temp,pathConfigstemp;
-		// for( int i=Final_Path->sizeNodes()-1;i>-1;i--)
-  //       {
-  //           temp.assign(Final_Path->getNodes(i)->getConfig().begin(),Final_Path->getNodes(i)->getConfig().end());
-  //           pathConfigstemp.push_back(temp[i]);
-  //       }
+		std::vector<float> temp;
+		std::vector<std::vector<float> > finalpathconfig,_final_path,smoothened;
+		for( int i=finalPath->sizeNodes()-1;i>-1;i--)
+		{
+			temp.assign(finalPath->getNodes(i)->getConfig().begin(),finalPath->getNodes(i)->getConfig().end());
+			finalpathconfig.push_back(temp);
+		}
 
-  //       smoothpath(pathConfigstemp, 0.25, 
-		// return finalPath;
+		reverse(finalpathconfig.begin(),finalpathconfig.end());
+		// full_path.reserve( source_path.size() + dest_path.size() ); // preallocate memory
+		// full_path.insert( full_path.end(), source_path.begin(), source_path.end() );
+		// full_path.insert( full_path.end(), dest_path.begin(), dest_path.end() );
+
+		smoothened = smoothpath(finalpathconfig,initPath->stepSize(), env,robot);
+
+		_final_path.reserve( finalpathconfig.size() + smoothened.size() ); // preallocate memory
+		// _final_path.insert( _final_path.end(), finalpathconfig.begin(), finalpathconfig.end() );
+		_final_path.insert( _final_path.end(), smoothened.begin(), smoothened.end() );
+		return _final_path;
 	}
 
-// 	//////////////////////// Shortcut smoothing to smooth the rrt path ////////////////////
+	std::vector<float> extend(std::vector<float>& parent, std::vector<float>& rand_config, float stepsize)
+	{
+	std::vector<float> child;
+	float leng = getNearestDistance(parent, rand_config);
+	for(unsigned int i=0; i<rand_config.size(); i++){
+		child.push_back(parent[i] + ((rand_config[i] - parent[i])*(stepsize/leng)));
+	}
+	return child;
+	}
 
-// vector< vector<dReal> > smoothpath(vector< vector<dReal> > path_ruggard, float stepsize, float* weight, EnvironmentBasePtr& env, RobotBasePtr& robot)
-// {
-// 	int hi, ran1, ran2, p1, p2, coll;
-// 	std::vector<float>  v1, v2, inter;
-// 	vector< vector<dReal> > bypass;
-// 	vector< vector<dReal> >::iterator it;
+	//////////////////////// Shortcut smoothing to smooth the rrt path ////////////////////
+
+	std::vector< std::vector<float> > smoothpath(std::vector< std::vector<float> > path_smoothened, float stepsize,OpenRAVE::EnvironmentBasePtr& env,OpenRAVE::RobotBasePtr& robot)
+	{
+		int hi, ran1, ran2, p1, p2, collided =0;
+		std::vector<float>  v1, v2, inter;
+		std::vector< std::vector<float> > bypass;
+		std::vector< std::vector<float> >::iterator it;
+		// NodeTree* smooth = new NodeTree();
+		// NodeTree* inter = new NodeTree();
 
 
-// 	for(int i=0; i<200; i++){
-// 		hi =path_ruggard.size();
-// 		ran1 = rand()%hi;
-// 		ran2 = rand()%hi;
-// 		p1=min(ran1,ran2);
-// 		p2=max(ran1,ran2);
-// 		if(p1 != p2){
-// 			v1 = path_ruggard[p1];
-// 			v2 = path_ruggard[p2];
-// 			inter = v1;
-// 			bypass.push_back(v1);
-// 			it = path_ruggard.begin();
+		for(int i=0; i<200; i++){
+			hi =path_smoothened.size();
+			ran1 = rand()%hi;
+			ran2 = rand()%hi;
+			p1 = std::min(ran1,ran2);
+			p2 = std::max(ran1,ran2);
+			if(p1 != p2){
+				v1 = path_smoothened[p1];
+				v2 = path_smoothened[p2];
+				// RRTNode* inter1 = new RRTNode(v1);
+				// RRTNode* inter2 = new RRTNode(v2);
+				inter = v1;
+				bypass.push_back(v1);
+				it = path_smoothened.begin();
 
-// 			while(1){
-// 				inter = extend(inter, v2, stepsize, weight);
-// 				robot->SetActiveDOFValues(inter);
-// 				coll = env->CheckCollision(robot) || robot->CheckSelfCollision();
-// 				if(coll == 1){
-// 					break;
-// 				}
-// 				else{
-// 					bypass.push_back(inter);
-// 					if(distance(inter, v2, weight) < stepsize){
-// 						break;
-// 					}
-// 				}
-// 			}
-// 			if(coll == 0){
-// 				path_ruggard.erase(path_ruggard.begin()+p1, path_ruggard.begin()+p2);
-// 				path_ruggard.insert(it+p1, bypass.begin(), bypass.end());
-// 			}
-// 			bypass.clear();
-// 		}
-// 	}	
-// 	return path_ruggard;
-// }
+				while(1){
+					inter = extend(inter,v2,stepsize);
+
+					// robot->SetActiveDOFValues(inter);
+					collided = checkifCollision(inter,env,robot);
+					if(collided == 1){
+						break;
+					}
+					else{
+						bypass.push_back(inter);
+						if(getNearestDistance(inter, v2) < stepsize){
+							break;
+						}
+					}
+				}
+				if(collided == 0){
+					path_smoothened.erase(path_smoothened.begin()+p1, path_smoothened.begin()+p2);
+					path_smoothened.insert(it+p1, bypass.begin(), bypass.end());
+				}
+				bypass.clear();
+			}
+		}	
+		return path_smoothened;
+	}
 
 	///////////////////// Useful finctions /////////////////////
 

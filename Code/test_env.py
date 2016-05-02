@@ -35,11 +35,11 @@ if __name__ == "__main__":
     # 1) get the 1st robot that is inside the loaded scene
     # 2) assign it to the variable named 'robot'
     PR2 = env.GetRobots()[0]
-    env.Remove(PR2)
+    # env.Remove(PR2)
     robot2 = env.ReadRobotXMLFile('plannerplugin/scenes/LegChair_RightBased_V3.robot.xml')
     env.Add(robot2)
 # 
-    PR2 =robot2
+    PR22 =robot2
     # tuck in the PR2's arms for driving
     # tuckarms(env,PR2);
 
@@ -58,13 +58,27 @@ if __name__ == "__main__":
         jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
         # [.5,-0.45,-0.1,-.1,-.45,0.65]
         # [.25,-0.15,-0.1,-.1,-.15,0.25]
+        # manip = PR2.GetManipulator('foot')
+        # print manip
+        # print manip.GetTransform()
+        indices = [PR2.GetJoint(name).GetDOFIndex() for name in jointnames]
+        print indices
         PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
-        PR2.SetDOFValues([.25,-.5,-0.5,0.5,.5,0.25],[0,1,2,3,4,5]) # set the first 4 dof values
+        PR2.SetDOFValues([.5,-0.45,-0.1,-.1,-.45,0.65],indices) # set the first 6 dof values
+        
+        
+        PR22.SetActiveDOFs([PR22.GetJoint(name).GetDOFIndex() for name in jointnames])
+        T = PR2.GetManipulator('foot').GetTransform()[0:3,4]
+        arr =numpy.dot(matrixFromPose([1,0,0,0,1,0,0])
+
+        PR22.SetTransform(arr,PR2.GetTransform())
+        PR22.SetDOFValues([0,0,0,0,0,0],indices)
+
         # print PR2.GetChain(manip.GetBase().GetIndex(),manip.GetEndEffector().GetIndex(),returnjoints=False)[1:]
         # PR2.SetActiveDOFValues([0,0,-1,-1,-.2,0])
         # manip = PR2.GetManipulator('foot')
         # print manip
-        print '\nRight foot at:',PR2.GetTransform()[1:4,0]
+        # print '\nRight foot at:',PR2.GetTransform()[1:4,0]
         # incollision = PR2.CheckSelfCollision()  
         # if incollision:
         #     print '\ncollision!!\n'
