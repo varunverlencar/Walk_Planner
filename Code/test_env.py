@@ -68,36 +68,37 @@ if __name__ == "__main__":
         PR2.SetDOFValues([.3,-0.35,-0.17,-.17,.35,0.05],indices) # set the first 6 dof values
         # PR2.GetLinks()[0].SetTransform()
         # print PR2.GetLinks()[0].GetTransform()
-        TR = PR2.GetManipulator('foot').GetTransform()[0:4,3]
-        print TR
-        T = PR22.GetTransform()[0:4,0:4]
-        T[0,3] = TR[0]
-        T[1,3] = TR[1]
-        T[2,3] = TR[2]
-        T[3,3] = TR[3]
-        # env.Remove(PR2)
-        # arr =numpy.dot(matrixFromPose([1,0,0,0,T[0,4],T[1,4],T[1]])
-        jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
-        indices = [PR22.GetJoint(name).GetDOFIndex() for name in jointnames]
-        # print indices
-        PR22.SetActiveDOFs([PR22.GetJoint(name).GetDOFIndex() for name in jointnames])
-        # PR22.SetTranslation3D(T)
-        PR22.SetTransform(T)
-        PR22.SetDOFValues([-0.05,-0.35,0.17,.17,.35,-0.3],indices)
-
-        TR = PR22.GetManipulator('foot').GetTransform()[0:4,3]
+        ################
+        # TR = PR2.GetManipulator('foot').GetTransform()[0:4,3]
         # print TR
-        T = PR2.GetTransform()[0:4,0:4]
-        T[0,3] = TR[0]
-        T[1,3] = TR[1]
-        T[2,3] = TR[2]
-        T[3,3] = TR[3]
+        # T = PR22.GetTransform()[0:4,0:4]
+        # T[0,3] = TR[0]
+        # T[1,3] = TR[1]
+        # T[2,3] = TR[2]
+        # T[3,3] = TR[3]
+        # # env.Remove(PR2)
+        # # arr =numpy.dot(matrixFromPose([1,0,0,0,T[0,4],T[1,4],T[1]])
+        # jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
+        # indices = [PR22.GetJoint(name).GetDOFIndex() for name in jointnames]
+        # # print indices
+        # PR22.SetActiveDOFs([PR22.GetJoint(name).GetDOFIndex() for name in jointnames])
+        # # PR22.SetTranslation3D(T)
+        # PR22.SetTransform(T)
+        PR22.SetDOFValues([-.05,-0.35,0.17,.17,.35,-0.3],indices)
 
-        PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
-        # PR22.SetTranslation3D(T)
-        PR2.SetTransform(T)
-        PR2.SetDOFValues([.3,-0.35,-0.17,-.17,.35,0.05],indices)
+        # TR = PR22.GetManipulator('foot').GetTransform()[0:4,3]
+        # # print TR
+        # T = PR2.GetTransform()[0:4,0:4]
+        # T[0,3] = TR[0]
+        # T[1,3] = TR[1]
+        # T[2,3] = TR[2]
+        # T[3,3] = TR[3]
 
+        # PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
+        # # PR22.SetTranslation3D(T)
+        # PR2.SetTransform(T)
+        # PR2.SetDOFValues([-.05,-0.35,0.17,.17,.35,-0.3],indices)
+        #############
         # print PR2.GetChain(manip.GetBase().GetIndex(),manip.GetEndEffector().GetIndex(),returnjoints=False)[1:]
         # PR2.SetActiveDOFValues([0,0,-1,-1,-.2,0])
         # manip = PR2.GetManipulator('foot')

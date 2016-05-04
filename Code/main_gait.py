@@ -35,26 +35,20 @@ if __name__ == "__main__":
 
 	# get the robot
 	robot1 = env.GetRobots()[0]
-	robot = robot1
+	robot = robot2
 	# robot = env.ReadRobotXMLFile('robots/neuronics-katana.zae')
 	# env.Add(robot)
-
-	Tr =robot.GetTransform()[1:4,0] #for zero matrix nothing else 
-	# Tr[0,1] = 0;Tr[0,2] = 0;Tr[0,3] = 0
-	ar = Tr
-	anew = ar
 
 	RaveInitialize()
 	RaveLoadPlugin('plannerplugin/build/plannerplugin')
 
-	# jointnames =[0,0,0,0,0,0]
 	init_pose = [0,0,0,0,0,0]
 	jointnames = ['leftAnkle','leftKnee','leftHip','rightHip','rightKnee','rightAnkle']
 	indices = [robot.GetJoint(name).GetDOFIndex() for name in jointnames]
-	robot.SetActiveDOFs(indices)  #set all dofs active      
-	robot.SetActiveDOFValues(init_pose);
-	robot.GetController().SetDesired(robot.GetDOFValues());
-	waitrobot(robot)
+	# robot.SetActiveDOFs(indices)  #set all dofs active      
+	# robot.SetActiveDOFValues(init_pose);
+	# robot.GetController().SetDesired(robot.GetDOFValues());
+	# waitrobot(robot)
 
 	footsteps = get_footsteps()
 	
@@ -68,11 +62,9 @@ if __name__ == "__main__":
 	# rfoot = robot.GetLinks()[5]
 	Tgoal = None
 	active_foot = None
-	next_foot = 5
 	flag = True
 	zp = 2
-	# robot.SetActiveManipulator()
-	T = robot.GetTransform() 
+	T = robot1.GetTransform() 
 	TR = T[0:4,3]
 	# TR = robot.GetManipulator('foot').GetTransform()[0:4,3]
 
@@ -116,149 +108,131 @@ if __name__ == "__main__":
 	right_foot_orient = 0
 	foot_orient = 0 #for static walking
 	goal_footstep = None
-
-	# goal_footsteps = [left_footsteps[i][0],left_footsteps[i][1],left_footsteps[i][2],left_foot_orient,right_footsteps[i][0],right_footsteps[i][1],right_footsteps[i][2],right_foot_orient]
-	if starting_foot == 1:
-		goal_footstep = [left_footsteps[i],foot_orient]
-		next_foot = 2
-	elif starting_foot == 2:
-		goal_footstep = [right_footsteps[i],foot_orient]
-		next_foot = 1
-	starting_foot = next_foot
+	next_foot = 0
+	stepsize = [0.25]
+	goalbias = [0.26]
 
 	##call gaitplanner with above goals
 	## stride = gaitplanner(init_pose,goal_footsteps)
 	## planned_gait.append(stride)
 	
-	goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
-	startconfig = [[0,0,0,0,0,0]]
-	
+	goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.30]]
+	startconfig = [[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05]]
+	q = 1
+	namer = 'left'
+
+	# goalconfig = [[-.05,-0.35,0.17,.17,.35,-0.3]]
+	# startconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
 
 	# goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3]]
 	# startconfig = [[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05]]
 	plannermodule = RaveCreateModule(env,'plannermodule')
-	# i =0
-	for m in range(0,len(goalconfig)):
+	
+	for m in range(0,len(goalconfig)-1): #remove -1 for continuos steps
 		
 		with env:
-			robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])  #set all dofs active      
+			  #set all dofs active      
 			# startconfig[m] = 	
-			if flag:
-				robot = robot1				
+			if next_foot == 0:
+				robot = robot1	
+				namer = 'left'
+				flag = False				
+				next_foot = 5			
 				if zp !=1:
 					env.Add(robot)
+					env.Remove(robot2)	
 					zp =1
-				# T = robot.GetTransform()[0:4,0:4]
+				
+				T = robot.GetTransform()[0:4,0:4]
 				T[0,3] = TR[0]
 				T[1,3] = TR[1]
 				T[2,3] = TR[2]
-				T[3,3] = TR[3]
-				# 	ar = Tr
-				# 	y = .92
-				# 	z = 0.076
-				# 	zp =2
-				# else:
-
-				# 	ar= Tr[0:3,3]
-				# TR = PR22.GetManipulator('foot').GetTransform()[0:4,3]
-				# robot.SetTransform(T)
-					
-				robot.SetTransform(T)
-				if next_foot ==0:
-					env.Remove(robot2)					
-				flag = False				
-				next_foot = 5
-							# robot.SetTransform(numpy.dot(matrixFromPose([1,0,0,0,ar[0]+anew[1],ar[1]+0.92,ar[2]-0.076]),robot.GetTransform()))
-			else:
-				robot = robot2
+				T[3,3] = TR[3]								
+				robot.SetTransform(T)									
 				
-				if next_foot ==5:
-					env.Remove(robot1)
-					env.Add(robot)
+				
+			else:
+				robot = robot2	
+				namer = 'right'	
+				env.Remove(robot1)
+				env.Add(robot)
 				flag = True
 				next_foot = 0
-				# ar= Tr[0:3,3]
 				T = robot.GetTransform()[0:4,0:4]
 				T[0,3] = TR[0]
 				T[1,3] = TR[1]
 				T[2,3] = TR[2]
 				T[3,3] = TR[3]
 				robot.SetTransform(T)
-				# robot.SetTransform(numpy.dot(matrixFromPose([1,0,0,0,ar[0]+anew[1],ar[1]-0.92,ar[2]+0.076]),robot.GetTransform()))
-
 			
-			
-
+			robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])
 			robot.SetActiveDOFValues(startconfig[m]);
-
-			# env.UpdatePublishedBodies() 
-
-			# [.25,-0.15,-0.1,-.1,-.15,0.25]
-			initConfig =  startconfig[m]+goalconfig[m] 
-			a = time.time()
-			print "Planning Started"
-			path = plannermodule.SendCommand('gaitplanner %f %f %f %f %f %f %f %f %f %f %f %f flag'%tuple(initConfig))
-			a = time.time()-a
-			print '\n time:', a
 			
+			if (q):
+				q =0
+				initConfig =  startconfig[m] + goalconfig[m] + goalbias + stepsize
+				a = time.time()
+				print "Planning Started"
+				path = plannermodule.SendCommand('gaitplanner %f %f %f %f %f %f %f %f %f %f %f %f %f %f end'%tuple(initConfig))
+				a = time.time()-a
+				print '\n time:', a
+				
 
-			_unsmoothPath = []; nodes =[]; lowerlimit=[];upperlimit=[]
-			# n = cmdout.size();
-			# n =n/7
-			# print " size",n
-			# print cmdout
-			if path is None:
-				raveLogWarn('command failed!')
-			else:
-				nodes = path.split(';')
-				print 'lenghth',len(nodes)
+				_unsmoothPath = []; nodes =[]; lowerlimit=[];upperlimit=[]
 
-				# for i in lines[:-1]:
-				for i in range(0,len(nodes)-1):
-					d = nodes[i].split()
-					_unsmoothPath.append([float(x) for x in d])
-					for x in d:
-					    print x,","
-					print "\n"
+				if path is None:
+					raveLogWarn('command failed!')
+				else:
+					nodes = path.split(';')
+					print 'lenghth',len(nodes)
 
-			print 'Smooth length',len(_unsmoothPath)
-			
-			lowerlimit,upperlimit = robot.GetDOFLimits(indices)
-			lowerlimit = lowerlimit * 3.1457/180.0
-			upperlimit = upperlimit * 3.1457/180.0
-			# lowerlimit[4]= -3.14
-			# upperlimit[4]= 3.14
-			# lowerlimit[6]= -3.14
-			# upperlimit[6]= 3.14
+					# for i in lines[:-1]:
+					for i in range(0,len(nodes)-1):
+						d = nodes[i].split()
+						_unsmoothPath.append([float(x) for x in d])
+						# for x in d:
+						#     print x,","
+						# print "\n"
 
-			handles1=[]
-			for i in (_unsmoothPath):
-				# for k in range(0,len(i)-1):
-				# 	if (i[k] != goalconfig[m][k]):
-				# 		if (i[k] < lowerlimit[k]):
-				# 			i[k]  = lowerlimit[k]
-				# 		elif(i[k] > upperlimit[k]):
-				# 			i[k] = upperlimit[k]
-				arr=array([i[0],i[1],i[2],i[3],i[4],i[5]])
-				robot.SetDOFValues(arr,indices)
-				pt=robot.GetLinks()[next_foot].GetTransform()[0:3,3]
-				handles1.append(env.plot3(pt,pointsize=0.03,colors=array(((0,0,1))),drawstyle=1))
-			# env.UpdatePublishedBodies() 
+				print 'Smooth length',len(_unsmoothPath)
+				
+				lowerlimit,upperlimit = robot.GetDOFLimits(indices)
 
+				handles1=[]
+				for i in (_unsmoothPath):
+					# for k in range(0,len(i)-1):
+					# 	if (i[k] != goalconfig[m][k]):
+					# 		if (i[k] < lowerlimit[k]):
+					# 			i[k]  = lowerlimit[k]
+					# 		elif(i[k] > upperlimit[k]):
+					# 			i[k] = upperlimit[k]
+					arr=array([i[0],i[1],i[2],i[3],i[4],i[5]])
+					robot.SetDOFValues(arr,indices)
+					pt=robot.GetManipulator('foot').GetTransform()[0:3,3]
+					handles1.append(env.plot3(pt,pointsize=0.03,colors=array(((0,0,1))),drawstyle=1))
+				# env.UpdatePublishedBodies() 
 
-			# anew= robot.GetTransform()[0:3,3]
-			traj = RaveCreateTrajectory(env,'')
-			traj.Init(robot.GetActiveConfigurationSpecification())
+				traj = RaveCreateTrajectory(env,'')
+				traj.Init(robot.GetActiveConfigurationSpecification())
 
-			for j in range(0,len(_unsmoothPath)):
-				traj.Insert(j,_unsmoothPath[j])
+				with open('Leftfoot.txt', 'a') as f1:
+						f1.write("\n")
+						f1.write(str(namer))
+						f1.close()
 
-			planningutils.RetimeActiveDOFTrajectory(traj,robot,hastimestamps=False,maxvelmult=1)
-			print 'duration',traj.GetDuration()
-			TR = robot.GetManipulator('foot').GetTransform()[0:4,3]
+				for j in range(0,len(_unsmoothPath)):
+					with open('Leftfoot.txt', 'a') as f1:
+						f1.write(str(_unsmoothPath[j]))
+						f1.write("\n")
+						f1.close()
+					traj.Insert(j,_unsmoothPath[j])
+
+				planningutils.RetimeActiveDOFTrajectory(traj,robot,hastimestamps=False,maxvelmult=1)
+				print 'duration',traj.GetDuration()
+				TR = robot.GetManipulator('foot').GetTransform()[0:4,3]
+				# print TR
 		robot.GetController().SetPath(traj)
 		robot.WaitForController(0)
-		# Tr = robot.GetTransform()
 		
 
 		### END OF YOUR CODE ###

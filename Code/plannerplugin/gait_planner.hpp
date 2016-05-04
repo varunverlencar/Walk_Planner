@@ -31,12 +31,8 @@ public:
 		this->_parent = Node->getParent();
 	}
 
-	void copyNode(RRTNode* newNode)	{
-		
-		_config.assign(newNode->getConfig().begin(),newNode->getConfig().end());
-		this->_parent = newNode->getParent();
-	}
-
+	RRTNode(){}
+	
 	virtual ~RRTNode() {
 		// delete _config;
 		// delete _parent;
@@ -57,29 +53,31 @@ private:
 	float _stepSize;
 	float _goalBias;
 	int _maxIterations;
-	unsigned int _numNodes;
-	float _errorfactor;
+	
+	float _goal_threshold;
 	bool _goalflag;
 
 public:
+	unsigned int _numNodes;
+
 	NodeTree()
 	{
 		//default values
-		_numNodes = 1;
-		setStepSize(0.05);
+		// _numNodes = 1;
+		// setStepSize(0.01);
 		// setGoalBias(0.26); // value between 0 and 1
 		setMaxIterations(10000);
-		setErrorFactor(1);
+		// setgoalthreshold(1);
 	}
 
 	NodeTree(RRTNode* start)
 	{
 		_nodes.push_back(start);
 		_numNodes = 1;
-		setStepSize(0.05);
+		// setStepSize(0.01);
 		// setGoalBias(0.26); // value between 0 and 1
 		setMaxIterations(10000);
-		setErrorFactor(1);
+		// setgoalthreshold(1);
 	}
 
 	virtual ~NodeTree() {
@@ -143,14 +141,14 @@ public:
 
 	///////////////////// Find the nearest node from the tree to current node /////////////////////
 
-	RRTNode* nearestNeighbour(RRTNode* randomNode)
+	RRTNode* nearestNeighbour(RRTNode* randomNode,NodeTree *tree)
 	{
 		// std::cout<<"Searching Nearest Neighbour...:"<<std::endl;
 		int dist = -1;
 		int nearestindex = 0;
 		
-		for (unsigned int i = 0; i<_nodes.size();++i) {
-			float currentdist = getNearestDistance(_nodes[i]->getConfig(), randomNode->getConfig());
+		for (unsigned int i = 0; i<tree->_nodes.size();++i) {
+			float currentdist = getNearestDistance(tree->_nodes[i]->getConfig(), randomNode->getConfig());
 			// std::cout<<"checking Node...:"<<i<<std::endl;
 			if (dist < 0 || currentdist < dist) {
 				dist = currentdist;
@@ -161,14 +159,14 @@ public:
 		// RRTNode* p = _nodes[nearestindex];
 
 		// std::vector<float> nn(_nodes[nearestindex]->getConfig().begin(),_nodes[nearestindex]->getConfig().end());
-		std::cout<<"Nearest node at:"<<nearestindex<<" Distance of:"<<dist<<std::endl;
+		// std::cout<<"Nearest node at:"<<nearestindex<<" Distance of:"<<dist<<std::endl;
 		// std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<","<<nn[6]<<"]"<<std::endl;
 
 		// std::vector<float>::const_iterator it;
 		// for(it=_nodes[nearestindex]->getConfig().begin(); it!=_nodes[nearestindex]->getConfig().end(); ++it){
 		// 	std::cout<<"Nearest found:"<<(*it)<<std::endl;
 		// }
-		return _nodes[nearestindex];
+		return tree->_nodes[nearestindex];
 	}
 
 	///////////////////// Find euclidean distance between given configuration and tree nodes /////////////////////
@@ -193,8 +191,8 @@ public:
 		//euclidean distance wieghted
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
-		// float w[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0};
-		float w[6] = {1,1,1,1,1,1};
+		float w[6] = {600.0, 400.0, 120.0, 100, 200.0, 600.0};
+		// float w[6] = {1,1,1,1,1,1};
 		for (unsigned int i = 0;i<newconfig.size();++i)
 		{
 			tempdist += w[i]*pow((newconfig[i] - existingNodeConfig[i]),2);
@@ -216,21 +214,21 @@ public:
 		}
 
 		float r = rand()/(float)RAND_MAX; //  r is between 0 and 1 since we normalize it
-		std::cout<<"random r:"<<r<<std::endl;
+		// std::cout<<"random r:"<<r<<std::endl;
 
-		if (r < p->goalBias()){//p->goalBias()
-			std::cout<<"Goal as Sample...:"<<std::endl<<std::endl;
+		if (r < .26){//p->goalBias()
+			// std::cout<<"Goal as Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(true);
 			goalflag=true;
 			return goalNode;
 		}
 
 		else {
-			std::cout<<"Getting Random Sample...:"<<std::endl<<std::endl;
+			// std::cout<<"Getting Random Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(false);
 			goalflag =false;
 			for (int i = 0; i < 6; ++i){
-				sampleconfig[i]=(((rand() * (upper[i]-lower[i]))/(float)RAND_MAX) + lower[i])*3.1457/180.00;
+				sampleconfig[i]=(((rand() * (upper[i]-lower[i]))/(float)RAND_MAX) + lower[i]);
 			}	
 
 		RRTNode* RandNode = new RRTNode(sampleconfig);
@@ -247,273 +245,308 @@ public:
 		bool collision = env->CheckCollision(robot);
 		bool selfcollision = robot->CheckSelfCollision();
 		
-		// float lolimit={-0.564602,-0.3536,-2.12131,-0.650001,-10000,-2.00001,-10000};
-		// float uplimit ={2.13539,1.2963,-0.15,3.75,10000,-0.1,1000};
-
-		if(collision)
-			std::cout<<"Collision!"<<std::endl;
-		else if (selfcollision)
-			std::cout<<"Self Collision!"<<std::endl;
+		// if(collision)
+		// 	std::cout<<"Collision!"<<std::endl;
+		// else if (selfcollision)
+		// 	std::cout<<"Self Collision!"<<std::endl;
 		return (collision||selfcollision);
 	}
 
 	///////////////////// Connect sampled node to nearest node in tree /////////////////////
 
-	NodeTree* connectNodes(RRTNode* sampledNode, RRTNode* nearestNode,RRTNode* goalNode, float stepsize,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot)
-	{
-		std::vector<float> goal = goalNode->getConfig();
-		std::cout<<"Connecting..."<<std::endl;
+	// NodeTree* connectNodes(RRTNode* sampledNode, RRTNode* nearestNode,RRTNode* goalNode, float stepsize,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot)
+	// {
+	// 	std::vector<float> goal = goalNode->getConfig();
+	// 	// std::cout<<"Connecting..."<<std::endl;
 
-		std::vector<float> targetConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
-		std::vector<float> unitConfig;
-		NodeTree* intermediateTree;
-		// NodeTree* q = new NodeTree();
+	// 	std::vector<float> targetConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
+	// 	std::vector<float> unitConfig;
+	// 	NodeTree* intermediateTree;
 
-		std::cout<<"Entered connect"<<std::endl<<std::endl;
-		bool flag = true; // for first node additions
-		std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
-		RRTNode* currentNode;
-		RRTNode* prevNode = nearestNode;
+	// 	// std::cout<<"Entered connect"<<std::endl<<std::endl;
+	// 	bool flag = true; // for first node additions
+	// 	std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
+	// 	RRTNode* currentNode;
+	// 	RRTNode* prevNode = nearestNode;
+	// 	float ndist =10;
+	// 	// bool _ind_distances = true;
 
-		for (int itr=0; itr<100; ++itr){ // avoid infinite loops, change as required
-			std::cout<<std::endl<<"Enter connectloop... iteration"<<itr<<std::endl;
-			std::vector<float>::const_iterator it;
-			std::vector<float> prevConfig(nearestNodeConfig.begin(),nearestNodeConfig.end());
+	// 	// for (int p=0;p<6;++p){ 
+	// 	// 	bool temp_flag = std::abs(goal[p]-targetConfig[p]) < 0.05;
+	// 	// 	std::cout<<temp_flag<<std::endl;
+	// 	// 	_ind_distances= _ind_distances && (temp_flag);
+	// 	// }
+
+	// 	while(1){
+	// 	// for (int itr=0; itr<100; ++itr)
+	// 	 // avoid infinite loops, change as required
+	// 		// std::cout<<std::endl<<"Enter connectloop... iteration"<<itr<<std::endl;
+	// 		std::vector<float>::const_iterator it;
+	// 		std::vector<float> prevConfig(nearestNodeConfig.begin(),nearestNodeConfig.end());
 			
-			float ndist = getNearestDistance(targetConfig,nearestNodeConfig);
+	// 		ndist = getNearestDistance(targetConfig,nearestNodeConfig);
 
-			std::cout<<"Sampledistance:"<<ndist<<std::endl;
+	// 		std::cout<<"Sampledistance:"<<ndist<<std::endl;
 
-			if (ndist > stepsize){
-				std::cout<<"Step:"<<itr<<std::endl;
+	// 		if (ndist > stepsize){
+	// 			// std::cout<<"Step:"<<itr<<std::endl;
 
-				for(int i = 0; i < 6; ++i){
-					unitConfig.push_back((targetConfig[i] - nearestNodeConfig[i])/ndist);
-					nearestNodeConfig[i] += stepsize * unitConfig[i]; // find unit vector
-				}
-				// for(it=nearestNodeConfig.begin(); it!=nearestNodeConfig.end(); ++it){
-				// 	std::cout<<"New nearestNode:"<<(*it)<<std::endl;
-				// }
+	// 			for(int i = 0; i < 6; ++i){
+	// 				unitConfig.push_back((targetConfig[i] - nearestNodeConfig[i])/ndist);
+	// 				nearestNodeConfig[i] += stepsize * unitConfig[i]; // find unit vector
+	// 			}
+	// 			// for(it=nearestNodeConfig.begin(); it!=nearestNodeConfig.end(); ++it){
+	// 			// 	std::cout<<"New nearestNode:"<<(*it)<<std::endl;
+	// 			// }
 				
 
-				if(getNearestDistance(nearestNodeConfig,prevConfig)){ // check if moved to new location, remove if fails
-					if(!checkifCollision(nearestNodeConfig,env,robot)){
-						currentNode  = new RRTNode(nearestNodeConfig, prevNode);
-						prevNode = currentNode;	//check this
-						// std::cout<<"prev-> curr:"<<std::endl;
+	// 			// if(getNearestDistance(nearestNodeConfig,prevConfig)){ // check if moved to new location, remove if fails
+	// 				if(!checkifCollision(nearestNodeConfig,env,robot)){
+	// 					currentNode  = new RRTNode(nearestNodeConfig, prevNode);
+	// 					prevNode = currentNode;	//check this
+	// 					std::cout<<"greater dist:"<<std::endl;
 						
-						//print contents of added node
-						std::cout<<"...New node created:"<<std::endl;
-						for(it=currentNode->getConfig().begin(); it!=currentNode->getConfig().end(); ++it){
-							std::cout<<(*it)<<std::endl;
-						}
+	// 					//print contents of added node
+	// 					// std::cout<<"...New node created:"<<std::endl;
+						
+	// 					// for(it=currentNode->getConfig().begin(); it!=currentNode->getConfig().end(); ++it){
+	// 					// 	std::cout<<(*it)<<std::endl;
+	// 					// }
 
-						// for(it=currentNode->getParent()->getConfig().begin(); it!=currentNode->getParent()->getConfig().end(); ++it){
-						// 	std::cout<<"currentNodeparent:"<<(*it)<<std::endl;
-						// }
-
-						// for(it=prevNode->getConfig().begin(); it!=prevNode->getConfig().end(); ++it){
-						// 	std::cout<<"prevNode:"<<(*it)<<std::endl;
-						// }
-
-						if (flag)
-						{
-							intermediateTree = new NodeTree(currentNode);
-							flag = false;
-						}
-						else
-						{
-							intermediateTree->addNode(currentNode);
-						}
-						std::cout<<"...New node Added:"<<std::endl;
-					}
-					else
-					{
-						// std::cout<<"in dist >step"<<std::endl;
-						if (flag)
-						{
-							intermediateTree = new NodeTree();
-							flag = false;
-						}			
-						break;
-					 //check if NULL
-					}
+						
+	// 					if (flag)
+	// 					{
+	// 						intermediateTree = new NodeTree(currentNode);
+	// 						flag = false;
+	// 					}
+	// 					else
+	// 					{
+	// 						intermediateTree->addNode(currentNode);
+	// 					}
+	// 					// std::cout<<"...New node Added:"<<std::endl;
+	// 				}
+	// 				else
+	// 				{
+	// 					// std::cout<<"in dist >step"<<std::endl;
+	// 					if (flag)
+	// 					{
+	// 						intermediateTree = new NodeTree();
+	// 						flag = false;
+	// 					}			
+	// 					break;
+	// 				 //check if NULL
+	// 				}
 					
-				}
-				// if new sampled node is the same as previous
-				else
-				{	
-					// std::cout<<"Not moved"<<std::endl;
-					if (flag)
-						{
-							intermediateTree = new NodeTree();
-							flag = false;
-						}
-					break;
-				}
-			}
-			// if the distance within the goal threashold range
-			else if(ndist <= 0.5) //q->errorfactor()
-			{	
-				std::cout<<std::endl<<"..Step :"<<itr<<"->inside epsilon "<<std::endl;
-				//if the distance is very close
-				if(!checkifCollision(nearestNodeConfig,env,robot))
-				{
-					std::cout<<"...Entered Goal Zone..."<<std::endl;
-					if (goalflag)	// if sampled node was goal 
-					{	
-						currentNode  = new RRTNode(goal, prevNode);
-						if (flag)
-						{
-							intermediateTree = new NodeTree(currentNode);
-							flag = false;
-						}
-						else
-						{
-							intermediateTree->addNode(currentNode);
+	// 			// }
+	// 			// if new sampled node is the same as previous
+	// 			// else
+	// 			// {	
+	// 			// 	std::cout<<"Not moved"<<std::endl;
+	// 			// 	if (flag)
+	// 			// 		{
+	// 			// 			intermediateTree = new NodeTree();
+	// 			// 			flag = false;
+	// 			// 		}
+	// 			// 	break;
+	// 			// }
+	// 		}
+	// 		// if the distance within the goal threashold range
+	// 		else if(ndist < 1) //q->errorfactor()
+	// 		{	
+	// 			// std::cout<<std::endl<<"..Step :"<<itr<<"->inside epsilon "<<std::endl;
+	// 			//if the distance is very close
+	// 			if(!checkifCollision(nearestNodeConfig,env,robot))
+	// 			{
+	// 				// std::cout<<"...Entered Goal Zone..."<<std::endl;
+	// 				if (goalflag)	// if sampled node was goal 
+	// 				{	
+	// 					currentNode  = new RRTNode(goal, prevNode);
+	// 					if (flag)
+	// 					{
+	// 						intermediateTree = new NodeTree(currentNode);
+	// 						intermediateTree->addNode(goalNode);
+	// 						flag = false;
+	// 					}
+	// 					else
+	// 					{
+	// 						intermediateTree->addNode(currentNode);
+	// 						intermediateTree->addNode(goalNode);
 							
-						}
-						std::cout<<"............Goal reached..."<<std::endl;
-						break;
+	// 					}
+	// 					// std::cout<<"............Goal reached..."<<std::endl;
+	// 					break;
 					
-					}
-					// else sampled node was reached and added 
-					else
-					{	currentNode  = new RRTNode(nearestNodeConfig, prevNode);
-						if (flag)
-						{
-							intermediateTree = new NodeTree(currentNode);
-							flag = false;
-						}
-						else
-						{
-							intermediateTree->addNode(currentNode);
-						}
-						std::cout<<"............Sample reached..."<<std::endl;
-						break;
-					}					
-				}
-				else
-				{	
-					// std::cout<<"in dist<step"<<std::endl;
-					if (flag)
-						{
-							intermediateTree = new NodeTree();
-							flag = false;
-						}
-					break;
-				}
+	// 				}
+	// 				// else sampled node was reached and added 
+	// 				else
+	// 				{	currentNode  = new RRTNode(nearestNodeConfig, prevNode);
+	// 					if (flag)
+	// 					{
+	// 						intermediateTree = new NodeTree(currentNode);
+	// 						flag = false;
+	// 					}
+	// 					else
+	// 					{
+	// 						intermediateTree->addNode(currentNode);
+	// 					}
+	// 					// std::cout<<"............Sample reached..."<<std::endl;
+	// 					break;
+	// 				}					
+	// 			}
+	// 			else
+	// 			{	
+	// 				// std::cout<<"in dist<step"<<std::endl;
+	// 				if (flag)
+	// 					{
+	// 						intermediateTree = new NodeTree();
+	// 						flag = false;
+	// 					}
+	// 				break;
+	// 			}
 
-			}
-			else {
-				std::cout<<"(o_o)(o_o)(o_o)(o_o)(o_o).."<<std::endl;
-			}
-		}
-		std::cout<<"Tree returned"<<intermediateTree->sizeNodes()<<std::endl;
-		return intermediateTree;
-	}	
+	// 		}
+	// 		else {
+	// 			std::cout<<"(o_o)(o_o)(o_o)(o_o)(o_o).."<<std::endl;
+	// 		}
+	// 	}
+	// 	// std::cout<<"Tree returned"<<intermediateTree->sizeNodes()<<std::endl;
+	// 	return intermediateTree;
+	// }	
 
 	///////////////////// Grow RRT tree /////////////////////
 
 
-	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start,const std::vector<float> &goal,float goalbias,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot)
+	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start,const std::vector<float> &goal,float goalbias,float stepsize,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot)
 	{
-		RRTNode* startNode = new RRTNode(start);
-		RRTNode* goalNode = new RRTNode(goal);
 		setgoalConfig(goal);
 		setGoalBias(goalbias);
+		setStepSize(stepsize);
+		setgoalthreshold(1);
+		srand (static_cast <unsigned> (time(0)));
+		float dist=100,ndist =10;
+		RRTNode* startNode = new RRTNode(start);
+		RRTNode* goalNode = new RRTNode(goal);
 		NodeTree* initPath = new NodeTree(startNode);
+		// initPath->_numNodes =1;
 		
-		NodeTree* path= new NodeTree();
+		// NodeTree* path= new NodeTree();
 		NodeTree* finalPath=new NodeTree();
+		RRTNode* currentNode= NULL;
+		RRTNode* prevNode = NULL;
 		RRTNode* nearestNode = NULL;
 		
 		// initPath->setgoalflag(false);
-		goalflag = false;
+		goalflag = false; //not needed
 
 		std::vector<float>::const_iterator it;
 		std::cout<<std::endl<<"Given:"<<std::endl<<"Goal:"<<goal[0]<<","<<goal[1]<<","<<goal[2]<<","<<goal[3]<<","<<goal[4]<<","<<goal[5]<<std::endl;
 		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<std::endl;
 
+		dist = getNearestDistance(start,goal);	//get disance from goal
+		nearestNode = initPath->nearestNeighbour(startNode,initPath);
 
-		for (int i=0; i<1000;++i){
-			std::cout<<std::endl<<"RRT-iteration"<<i<<std::endl;
-			
+		int i=0; 
+		// float ndist = getNearestDistance(start,goal);
+		while(dist > goalthreshold()){	//if distance from goal is greater than set threshold
+		// while (ndist > .5){
+			// std::cout<<std::endl<<"RRT-iteration"<<i<<std::endl;
+			std::cout<<std::endl<<"Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
+			i++;
 			RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode);
-			
-			if(!checkifCollision(sampledNode->getConfig(),env,robot)){
-				nearestNode = initPath->nearestNeighbour(sampledNode);
 
-				std::vector<float> nn(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
-				std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<"]"<<std::endl;
+			if(!checkifCollision(sampledNode->getConfig(),env,robot)){	//check for collision
+				nearestNode = initPath->nearestNeighbour(sampledNode,initPath);
+				std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
+				// std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<"]"<<std::endl;
 				// std::cout<<"Nearest Node found..."<<std::endl;
 				
-				path = initPath->connectNodes(sampledNode, nearestNode, goalNode,initPath->stepSize(),env,robot);
-				
-				
+				// path = initPath->connectNodes(sampledNode, nearestNode, goalNode,initPath->stepSize(),env,robot);
+				std::vector<float> targetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
+				prevNode = nearestNode;	//nearest node becomes parent for next node
+				ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
+
+				if(ndist <= stepsize){		//if within stepsize add to the initial tree
+					currentNode  = new RRTNode(targetNodeConfig, prevNode);
+					initPath->addNode(currentNode);
+
+					if (getNearestDistance(goal,targetNodeConfig) < dist){	//find targets distance from goal
+						dist = getNearestDistance(goal,targetNodeConfig);
+					}
+				}
+				else{
+					while(ndist > stepsize){
+						nearestNodeConfig = connect(nearestNodeConfig,targetNodeConfig,stepsize); //updated step from nearest node of tree towards target
+						
+						if(!checkifCollision(nearestNodeConfig,env,robot)){
+							currentNode  = new RRTNode(nearestNodeConfig, prevNode);
+							initPath->addNode(currentNode);	
+							prevNode = currentNode;		// make current as parent
+
+							if (getNearestDistance(goal,nearestNodeConfig) < dist){
+								dist = getNearestDistance(goal,nearestNodeConfig);
+							}
+							ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//find new distance from sampled target
+						}
+						else
+							break;	//if collision
+
+						if(ndist <= stepsize){	// if close to the sampled target add
+							currentNode  = new RRTNode(targetNodeConfig, prevNode);
+							initPath->addNode(currentNode);
+
+							if (getNearestDistance(goal,targetNodeConfig) < dist){
+								dist = getNearestDistance(goal,targetNodeConfig);
+							}
+						}
+					}
+				}
+
 			}
 			else
-				continue;
-						 
-			if(path->sizeNodes()==1){
-				std::cout<<"restart subpath.."<<std::endl;
-			 	continue;
-			}
-			else if(getNearestDistance(path->lastNode()->getConfig(),goal)==0){
-				// std::cout<<"found found..."<<std::endl;
-				initPath->addNodeTree(path);
-				std::cout<<"...Final..."<<std::endl;
-											
-				break;
-			}
-			else{
-				initPath->addNodeTree(path);
-				std::cout<<"Intermediate Tree..."<<std::endl;
-				// finalPath = initPath->getPath(initPath->sizeNodes()-1);
-			}			
+				continue;					
 		}
-		std::cout<<" Path found..."<<std::endl;
 
-		finalPath = initPath->getPath(initPath->sizeNodes()-1);
-		std::cout<<" initPath Size..."<<initPath->sizeNodes()<<std::endl;
+		std::cout<<"...Planning Complete,Path found..."<<std::endl;
 
-		std::cout<<" FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
+		prevNode = currentNode;	
+		RRTNode* finalNode = new RRTNode(goal,prevNode);
+		initPath->addNode(finalNode);		//adding goal at the last
+		finalPath = initPath->getPath(initPath->sizeNodes()-1);		//generating the path form start to goal
 
-		for(it=finalPath->lastNode()->getConfig().begin(); it!=finalPath->lastNode()->getConfig().end(); ++it){
-					std::cout<<"final Node:"<<(*it)<<std::endl;
-				}
+		std::cout<<"...FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
 
 		std::vector<float> temp;
 		std::vector<std::vector<float> > finalpathconfig,_final_path,smoothened;
 
-		for( int i=finalPath->sizeNodes()-1;i>-1;i--)
-		{
+		for( int i=finalPath->sizeNodes()-1;i>-1;i--){			//getting reversed configurations
 			temp.assign(finalPath->getNodes(i)->getConfig().begin(),finalPath->getNodes(i)->getConfig().end());
 			finalpathconfig.push_back(temp);
 		}
 
-		// reverse(finalpathconfig.begin(),finalpathconfig.end());
-		// full_path.reserve( source_path.size() + dest_path.size() ); // preallocate memory
-		// full_path.insert( full_path.end(), source_path.begin(), source_path.end() );
-		// full_path.insert( full_path.end(), dest_path.begin(), dest_path.end() );
+		for(it=finalpathconfig.back().begin(); it!=finalpathconfig.back().end(); ++it){
+			std::cout<<"final Node:"<<(*it)<<std::endl;
+		}
 
-		smoothened = smoothpath(finalpathconfig,initPath->stepSize(), env,robot);
+		std::cout<<" ...Smoothing.."<<std::endl;
+		smoothened = smoothpath(finalpathconfig,stepsize,env,robot);		//shortcut smoothened path
+		std::cout<<" ...Smoothing Complete..."<<std::endl;
 
-		_final_path.reserve( finalpathconfig.size() + smoothened.size() ); // preallocate memory
-		// _final_path.insert( _final_path.end(), finalpathconfig.begin(), finalpathconfig.end() );
-		_final_path.insert( _final_path.end(), smoothened.begin(), smoothened.end() );
+		_final_path.reserve(finalpathconfig.size() + smoothened.size()); // preallocate memory
+		// _final_path.insert( _final_path.end(), finalpathconfig.begin(), finalpathconfig.end());	//if req, unsmoothened path
+		_final_path.insert(_final_path.end(), smoothened.begin(), smoothened.end());
 		return _final_path;
 	}
 
-	std::vector<float> extend(std::vector<float>& parent, std::vector<float>& rand_config, float stepsize)
+	std::vector<float> connect(std::vector<float>& parent, std::vector<float>& rand_config, float stepsize)
 	{
-	std::vector<float> child;
-	float leng = getNearestDistance(parent, rand_config);
-	for(unsigned int i=0; i<rand_config.size(); i++){
-		child.push_back(parent[i] + ((rand_config[i] - parent[i])*(stepsize/leng)));
+		std::vector<float> nNode;
+		float leng = getNearestDistance(parent, rand_config);
+		for(unsigned int i=0; i<rand_config.size(); i++){
+			nNode.push_back(parent[i] + ((rand_config[i] - parent[i])*(stepsize/leng)));
+		}
+		return nNode;
 	}
-	return child;
-	}
+
 
 	//////////////////////// Shortcut smoothing to smooth the rrt path ////////////////////
 
@@ -523,29 +556,23 @@ public:
 		std::vector<float>  v1, v2, inter;
 		std::vector< std::vector<float> > bypass;
 		std::vector< std::vector<float> >::iterator it;
-		// NodeTree* smooth = new NodeTree();
-		// NodeTree* inter = new NodeTree();
 
 
-		for(int i=0; i<10; i++){
-			hi =path_smoothened.size();
+		for(int i=0; i<200; i++){
+			hi = path_smoothened.size();
 			ran1 = rand()%hi;
 			ran2 = rand()%hi;
 			p1 = std::min(ran1,ran2);
 			p2 = std::max(ran1,ran2);
 			if(p1 != p2){
-				v1 = path_smoothened[p1];
+				v1 = path_smoothened[p1];	// sample random 2 points
 				v2 = path_smoothened[p2];
-				// RRTNode* inter1 = new RRTNode(v1);
-				// RRTNode* inter2 = new RRTNode(v2);
 				inter = v1;
 				bypass.push_back(v1);
 				it = path_smoothened.begin();
 
 				while(1){
-					inter = extend(inter,v2,stepsize);
-
-					// robot->SetActiveDOFValues(inter);
+					inter = connect(inter,v2,stepsize);	//step towards the sample node
 					collided = checkifCollision(inter,env,robot);
 					if(collided == 1){
 						break;
@@ -558,7 +585,7 @@ public:
 					}
 				}
 				if(collided == 0){
-					path_smoothened.erase(path_smoothened.begin()+p1, path_smoothened.begin()+p2);
+					path_smoothened.erase(path_smoothened.begin()+p1, path_smoothened.begin()+p2); //erase old and insert smooth path
 					path_smoothened.insert(it+p1, bypass.begin(), bypass.end());
 				}
 				bypass.clear();
@@ -583,11 +610,11 @@ public:
 
 	float stepSize() const {return _stepSize;}
 
-	void setStepSize(float stepSize = 0.05) {_stepSize = stepSize;}
+	void setStepSize(float stepSize = 0.25) {_stepSize = stepSize;}
 
-	float errorfactor() const {return _errorfactor;}
+	float goalthreshold() const {return _goal_threshold;}
 
-	void setErrorFactor(float err = 1) {_errorfactor = err;}
+	void setgoalthreshold(float err = 1) {_goal_threshold = err;}
 
 	float goalBias() const {return _goalBias;}
 

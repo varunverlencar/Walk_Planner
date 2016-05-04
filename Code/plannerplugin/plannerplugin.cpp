@@ -26,11 +26,12 @@ public:
         env->GetRobots(pr2);
 
 
-        robot = pr2[0];std::cout<<" Gait Planning1..."<<std::endl;
+        robot = pr2[0];
+        std::cout<<" Gait Planning1..."<<std::endl;
                
         
 
-        float start, goal, goalbias = .96;
+        float start, goal, goalbias = .26, stepsize;
         std::vector<float> startconfig;
         std::vector<float> goalconfig;
 
@@ -44,8 +45,8 @@ public:
             goalconfig.push_back(goal);
         }
 
-        
-        
+        sinput >> goalbias;
+        sinput >> stepsize;
         std::vector<int> indices;
         std::vector<OpenRAVE::dReal> upperlimit,lowerlimit;
         
@@ -71,7 +72,7 @@ public:
         // NodeTree *Final_Path= new NodeTree();
         // Final_Path = Final_Path->rrtgrow(startconfig,goalconfig,goalbias,upper,lower,env,robot);
         NodeTree a;
-        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,upper,lower,env,robot);
+        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot);
         
         std::vector<std::vector<float> > temp;
         std::vector<float>::const_iterator it;
