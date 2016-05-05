@@ -232,14 +232,14 @@ public:
 			// std::cout<<"Getting Random Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(false);
 			// goalflag =false;
-			// bool t = 0;
-			// while(!t){
+			bool t = 0;
+			while(!t){
 				for (int i = 0; i < 6; ++i){
 				sampleconfig[i]=(((float)(rand() * (upper[i]-lower[i]))/(float)RAND_MAX) + lower[i]);
 				}
-				// int sum  = sampleconfig[baseleg[0]]+sampleconfig[baseleg[1]]+sampleconfig[baseleg[2]];
-				// if (std::abs(sum) < 0.35){t =1;}
-			// }
+				float sum  = sampleconfig[baseleg[0]]+sampleconfig[baseleg[1]]+sampleconfig[baseleg[2]];
+				if (std::abs(sum) < 0.35){t =1;}
+			}
 
 		RRTNode* RandNode = new RRTNode(sampleconfig);
 		return RandNode;
@@ -299,10 +299,11 @@ public:
 
 		std::vector<std::vector<float> > _final_path,finalpathconfig,smoothened;
 		
-
 		std::vector<float>::const_iterator it;
 		std::cout<<std::endl<<"Given:"<<std::endl<<"Goal:"<<goal[0]<<","<<goal[1]<<","<<goal[2]<<","<<goal[3]<<","<<goal[4]<<","<<goal[5]<<std::endl;
 		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<std::endl;
+
+		float mulf = 2;
 
 		if (Bi == 0){
 			std::cout<<"....RRT-Connect..."<<std::endl<<"...Planning..."<<std::endl;
@@ -325,7 +326,7 @@ public:
 					prevNode = nearestNode;	//nearest node becomes parent for next node
 					ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
 
-					if(ndist <= stepsize){		//if within stepsize add to the initial tree
+					if(ndist <= stepsize*mulf){		//if within stepsize add to the initial tree
 						currentNode  = new RRTNode(targetNodeConfig, prevNode);
 						initPath->addNode(currentNode);
 						prevNode = currentNode;
@@ -335,7 +336,7 @@ public:
 						}
 					}
 					else{
-						while(ndist > threshold){
+						while(ndist > stepsize*mulf){
 							// std::cout<<std::endl<<"Distance:"<<dist<<std::endl;
 							// std::cout<<std::endl<<"NearestDistance:"<<ndist<<std::endl;
 							
@@ -354,7 +355,7 @@ public:
 								else
 									break;	//if collision
 
-								if(ndist <= threshold){	// if close to the sampled target add
+								if(ndist <= stepsize*mulf){	// if close to the sampled target add
 									currentNode  = new RRTNode(targetNodeConfig, prevNode);
 									initPath->addNode(currentNode);
 									prevNode = currentNode;
@@ -398,7 +399,7 @@ public:
 			i++;
 			RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode,baseleg);
 
-			//check for collision
+			if(!checkifCollision(sampledNode->getConfig(),env,robot)){//check for collision
 				nearestNode = initPath->nearestNeighbour(sampledNode,initPath);
 				std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
 				std::vector<float> targetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
@@ -406,7 +407,7 @@ public:
 				ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
 				// std::cout<<std::endl<<"Bi-NearestDistance1:"<<ndist<<std::endl;
 
-				if(ndist <= threshold*.75){											//if within stepsize add to the initial tree
+				if(ndist <= stepsize*mulf){											//if within stepsize add to the initial tree
 					currentNode  = new RRTNode(targetNodeConfig, prevNode);
 					initPath->addNode(currentNode);
 					prevNode = currentNode;	
@@ -416,7 +417,7 @@ public:
 					}
 				}
 				else{
-					while(ndist > threshold*.75){
+					while(ndist > stepsize*mulf){
 						// std::cout<<std::endl<<"Bi-Distance:"<<dist<<std::endl;
 						// std::cout<<std::endl<<"Bi-NearestDistance2:"<<ndist<<std::endl;
 						
@@ -436,7 +437,7 @@ public:
 								// nodeNum-=1;
 								break;	}//if collision
 
-							if(ndist <= threshold*.75){	// if close to the sampled target add
+							if(ndist <= stepsize*mulf){	// if close to the sampled target add
 								currentNode  = new RRTNode(targetNodeConfig, prevNode);
 								initPath->addNode(currentNode);
 								prevNode = currentNode;
@@ -446,8 +447,10 @@ public:
 								}
 							}
 						}
-					
+					}
 				}
+				else
+					continue;
 
 				
 
@@ -462,11 +465,11 @@ public:
 				std::vector<float> gtargetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
 				ndist = getNearestDistance(gtargetNodeConfig,gnearestNodeConfig);
 
-				if(ndist <= threshold*.75){											//if within stepsize add to the initial tree
+				if(ndist <= stepsize*mulf){											//if within stepsize add to the initial tree
 					break;
 				}
 				else{
-					while(ndist > threshold*.75){
+					while(ndist > stepsize*mulf){
 						// std::cout<<std::endl<<"G-Distance:"<<dist<<std::endl;
 						// std::cout<<std::endl<<"G-NearestDistance:"<<ndist<<std::endl;
 						
@@ -552,8 +555,11 @@ public:
 		std::vector<float>  v1, v2, inter;
 		std::vector< std::vector<float> > bypass;
 		std::vector< std::vector<float> >::iterator it;
-		int n = 5;
-		int xx = (path_smoothened.size())/n;
+		int n = 3;
+		int xx = (path_smoothened.size()/n);
+
+		if (path_smoothened.size() < 10)
+			xx = 1;
 
 		for(int i=0; i<xx; i++){
 			hi = path_smoothened.size();
