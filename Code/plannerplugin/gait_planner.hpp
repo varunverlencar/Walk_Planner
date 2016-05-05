@@ -184,6 +184,20 @@ public:
 		return tempdist;
 	}
 
+	////////////// Incremental update of shortest distance between two trees ///////////////////////
+
+	float approach_dist(const std::vector<float>& child, NodeTree *test)
+	{
+		float distan=0.0, best = -1;
+		for(unsigned int i=0; i<test->_nodes.size(); i++){
+			distan = getNearestDistance(test->_nodes[i]->getConfig(), child);
+			if(best < 0 || distan < best){
+				best=distan;
+			}
+		}
+		return best;
+	}
+
 	///////////////////// Find weighted euclidean distance between given configuration and tree nodes /////////////////////
 
 	float getNearestDistance(const std::vector<float> &existingNodeConfig, const std::vector<float> &newconfig)
@@ -262,7 +276,7 @@ public:
 	///////////////////// Grow RRT tree /////////////////////
 
 
-	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start,const std::vector<float> &goal,float goalbias,float stepsize,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot, std::vector<float> baseleg)
+	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start,const std::vector<float> &goal,float goalbias,float stepsize,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot, std::vector<float> baseleg, int Bi)
 	{
 		setgoalConfig(goal);
 		setGoalBias(goalbias);
@@ -276,10 +290,17 @@ public:
 		// initPath->_numNodes =1;
 		
 		// NodeTree* path= new NodeTree();
-		NodeTree* finalPath=new NodeTree();
-		RRTNode* currentNode= NULL;
+		NodeTree* finalPath = new NodeTree();
+		NodeTree* source_path = new NodeTree();
+		NodeTree* dest_path = new NodeTree();
+		RRTNode* currentNode = NULL;
 		RRTNode* prevNode = NULL;
 		RRTNode* nearestNode = NULL;
+
+		NodeTree *goal_tree = new NodeTree(goalNode);
+		RRTNode *goal_near = new RRTNode;
+
+		std::vector<std::vector<float> > _final_path,finalpathconfig,smoothened;
 		
 		// initPath->setgoalflag(false);
 		// goalflag = false; //not needed
@@ -288,53 +309,138 @@ public:
 		std::cout<<std::endl<<"Given:"<<std::endl<<"Goal:"<<goal[0]<<","<<goal[1]<<","<<goal[2]<<","<<goal[3]<<","<<goal[4]<<","<<goal[5]<<std::endl;
 		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<std::endl;
 
-		dist = getNearestDistance(start,goal);
-		std::vector<float> node;	//get disance from goal
-		nearestNode = initPath->nearestNeighbour(startNode,initPath);
-		std::cout<<std::endl<<"Goal Distance:"<<dist<<std::endl;
+		if (Bi == 0){
+			dist = getNearestDistance(start,goal);
+			std::vector<float> node;	//get disance from goal
+			nearestNode = initPath->nearestNeighbour(startNode,initPath);
+			std::cout<<std::endl<<"Goal Distance:"<<dist<<std::endl;
 
-		int i=0; int threshold = 1;
+			int i=0; int threshold = 1;
+			// float ndist = getNearestDistance(start,goal);
+			while(dist > threshold){	//if distance from goal is greater than set threshold
+			
+				std::cout<<std::endl<<"Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
+				i++;
+				RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode,baseleg);
+
+				if(!checkifCollision(sampledNode->getConfig(),env,robot)){	//check for collision
+					nearestNode = initPath->nearestNeighbour(sampledNode,initPath);
+					std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
+					// std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<"]"<<std::endl;
+					// std::cout<<"Nearest Node found..."<<std::endl;
+					
+					// path = initPath->connectNodes(sampledNode, nearestNode, goalNode,initPath->stepSize(),env,robot);
+					std::vector<float> targetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
+					prevNode = nearestNode;	//nearest node becomes parent for next node
+					ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
+
+					if(ndist <= threshold){		//if within stepsize add to the initial tree
+						currentNode  = new RRTNode(targetNodeConfig, prevNode);
+						initPath->addNode(currentNode);
+
+						if (getNearestDistance(goal,targetNodeConfig) < dist){	//find targets distance from goal
+							dist = getNearestDistance(goal,targetNodeConfig);
+						}
+					}
+					else{
+						while(ndist > threshold){
+							std::cout<<std::endl<<"Distance:"<<dist<<std::endl;
+							std::cout<<std::endl<<"NearestDistance:"<<ndist<<std::endl;
+							node = nearestNodeConfig;
+							node = connect(nearestNodeConfig,targetNodeConfig,stepsize); //updated step from nearest node of tree towards target
+							if(!getNearestDistance(node,nearestNodeConfig)){
+								if(!checkifCollision(node,env,robot)){
+									currentNode  = new RRTNode(node, prevNode);
+									initPath->addNode(currentNode);	
+									prevNode = currentNode;		// make current as parent
+
+									if (getNearestDistance(goal,node) < dist){
+										dist = getNearestDistance(goal,node);
+									}
+									ndist = getNearestDistance(targetNodeConfig,node);	//find new distance from sampled target
+								}
+								else
+									break;	//if collision
+
+								if(ndist <= threshold){	// if close to the sampled target add
+									currentNode  = new RRTNode(targetNodeConfig, prevNode);
+									initPath->addNode(currentNode);
+
+									if (getNearestDistance(goal,targetNodeConfig) < dist){
+										dist = getNearestDistance(goal,targetNodeConfig);
+									}
+								}
+							}
+							else 
+								break;
+						}
+						
+					}
+
+				}
+				else
+					continue;					
+			}
+
+			std::cout<<"...Planning Complete,Path found..."<<std::endl;
+
+			prevNode = currentNode;	
+			RRTNode* finalNode = new RRTNode(goal,prevNode);
+			initPath->addNode(finalNode);		//adding goal at the last
+			finalPath = initPath->getPath(initPath->sizeNodes()-1);		//generating the path form start to goal
+			std::cout<<"...FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
+
+			std::vector<float> temp;
+
+			for( int i=finalPath->sizeNodes()-1;i>-1;i--){			//getting reversed configurations
+				temp.assign(finalPath->getNodes(i)->getConfig().begin(),finalPath->getNodes(i)->getConfig().end());
+				finalpathconfig.push_back(temp);
+			}
+	}
+	//////////////////////BiRRT Planning//////////////////////////////////////////////////
+	else{
+		dist = approach_dist(start, goal_tree);
+		std::vector<float> node,gnode;	//get disance from goal
+		std::cout<<std::endl<<"Bi-Goal Distance:"<<dist<<std::endl;
+
+		int i=0; int threshold = 2;
 		// float ndist = getNearestDistance(start,goal);
 		while(dist > threshold){	//if distance from goal is greater than set threshold
 		// while (ndist > .5){
 			// std::cout<<std::endl<<"RRT-iteration"<<i<<std::endl;
-			std::cout<<std::endl<<"Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
+			std::cout<<std::endl<<"Bi-Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
 			i++;
 			RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode,baseleg);
 
 			if(!checkifCollision(sampledNode->getConfig(),env,robot)){	//check for collision
 				nearestNode = initPath->nearestNeighbour(sampledNode,initPath);
 				std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
-				// std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<"]"<<std::endl;
-				// std::cout<<"Nearest Node found..."<<std::endl;
-				
-				// path = initPath->connectNodes(sampledNode, nearestNode, goalNode,initPath->stepSize(),env,robot);
 				std::vector<float> targetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
-				prevNode = nearestNode;	//nearest node becomes parent for next node
+				prevNode = nearestNode;											//nearest node becomes parent for next node
 				ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
 
-				if(ndist <= threshold){		//if within stepsize add to the initial tree
+				if(ndist <= threshold){											//if within stepsize add to the initial tree
 					currentNode  = new RRTNode(targetNodeConfig, prevNode);
 					initPath->addNode(currentNode);
 
-					if (getNearestDistance(goal,targetNodeConfig) < dist){	//find targets distance from goal
-						dist = getNearestDistance(goal,targetNodeConfig);
+					if (approach_dist(targetNodeConfig, goal_tree) < dist){		//find targets distance from goal
+						dist = approach_dist(targetNodeConfig, goal_tree);
 					}
 				}
 				else{
 					while(ndist > threshold){
-						std::cout<<std::endl<<"Distance:"<<dist<<std::endl;
-						std::cout<<std::endl<<"NearestDistance:"<<ndist<<std::endl;
+						std::cout<<std::endl<<"Bi-Distance:"<<dist<<std::endl;
+						std::cout<<std::endl<<"Bi-NearestDistance:"<<ndist<<std::endl;
 						node = nearestNodeConfig;
 						node = connect(nearestNodeConfig,targetNodeConfig,stepsize); //updated step from nearest node of tree towards target
 						if(!getNearestDistance(node,nearestNodeConfig)){
 							if(!checkifCollision(node,env,robot)){
 								currentNode  = new RRTNode(node, prevNode);
 								initPath->addNode(currentNode);	
-								prevNode = currentNode;		// make current as parent
+								prevNode = currentNode;								// make current as parent
 
-								if (getNearestDistance(goal,node) < dist){
-									dist = getNearestDistance(goal,node);
+								if (approach_dist(node, goal_tree) < dist){
+									dist = approach_dist(node, goal_tree);
 								}
 								ndist = getNearestDistance(targetNodeConfig,node);	//find new distance from sampled target
 							}
@@ -345,8 +451,8 @@ public:
 								currentNode  = new RRTNode(targetNodeConfig, prevNode);
 								initPath->addNode(currentNode);
 
-								if (getNearestDistance(goal,targetNodeConfig) < dist){
-									dist = getNearestDistance(goal,targetNodeConfig);
+								if (approach_dist(targetNodeConfig, goal_tree) < dist){
+									dist = approach_dist(targetNodeConfig, goal_tree);
 								}
 							}
 						}
@@ -358,25 +464,74 @@ public:
 
 			}
 			else
-				continue;					
-		}
+				continue;	
 
-		std::cout<<"...Planning Complete,Path found..."<<std::endl;
+		//////////////////Goal tree Side//////////////////////
 
-		prevNode = currentNode;	
-		RRTNode* finalNode = new RRTNode(goal,prevNode);
-		initPath->addNode(finalNode);		//adding goal at the last
-		finalPath = initPath->getPath(initPath->sizeNodes()-1);		//generating the path form start to goal
+			goal_near = new RRTNode;
+			RRTNode* prevNodeg = new RRTNode;
+			if(!checkifCollision(sampledNode->getConfig(),env,robot)){
+				goal_near = goal_tree->nearestNeighbour(sampledNode,goal_tree);
+				prevNodeg = goal_near;
+				std::vector<float> gnearestNodeConfig(goal_near->getConfig().begin(),goal_near->getConfig().end());
+				std::vector<float> gtargetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
+				ndist = getNearestDistance(gtargetNodeConfig,gnearestNodeConfig);
 
-		std::cout<<"...FinalPath Size..."<<finalPath->sizeNodes()<<std::endl;
+				if(ndist <= threshold){											//if within stepsize add to the initial tree
+					break;
+				}
+				else{
+					while(ndist > threshold){
+						std::cout<<std::endl<<"G-Distance:"<<dist<<std::endl;
+						std::cout<<std::endl<<"G-NearestDistance:"<<ndist<<std::endl;
+						gnode = gnearestNodeConfig;
+						gnode = connect(gnearestNodeConfig,gtargetNodeConfig,stepsize); //updated step from nearest node of tree towards target
+						if(!getNearestDistance(gnode,gnearestNodeConfig)){
+							if(!checkifCollision(gnode,env,robot)){
+								goalNode  = new RRTNode(gnode, prevNode);
+								goal_tree->addNode(goalNode);	
+								prevNodeg = goalNode;								// make current as parent
 
+								if (approach_dist(gnode, initPath) < dist){
+									dist = approach_dist(gnode, initPath);
+								}
+								ndist = getNearestDistance(gtargetNodeConfig,gnode);	//find new distance from sampled target
+							}
+							else
+								break;	//if collision
+
+						}
+						else 
+							break;
+					}
+					
+				}
+
+			}
+		}	
+
+		std::cout<<"...BiRRT-Planning Complete,Path found..."<<std::endl;
+
+		
+		source_path = initPath->getPath(initPath->sizeNodes()-1);
+		dest_path = goal_tree->getPath(goal_tree->sizeNodes()-1);
+		
 		std::vector<float> temp;
-		std::vector<std::vector<float> > finalpathconfig,_final_path,smoothened;
 
-		for( int i=finalPath->sizeNodes()-1;i>-1;i--){			//getting reversed configurations
-			temp.assign(finalPath->getNodes(i)->getConfig().begin(),finalPath->getNodes(i)->getConfig().end());
+		for( int i=source_path->sizeNodes()-1;i>-1;i--){			//getting reversed configurations
+			temp.assign(source_path->getNodes(i)->getConfig().begin(),source_path->getNodes(i)->getConfig().end());
 			finalpathconfig.push_back(temp);
 		}
+
+		for( unsigned int i=0; i<dest_path->sizeNodes()-1;++i){			//getting reversed configurations
+			temp.assign(dest_path->getNodes(i)->getConfig().begin(),dest_path->getNodes(i)->getConfig().end());
+			finalpathconfig.push_back(temp);
+		}
+
+	}
+
+	///////////////////////completed planning////////////////////
+		
 
 		for(it=finalpathconfig.back().begin(); it!=finalpathconfig.back().end(); ++it){
 			std::cout<<"final Node:"<<(*it)<<std::endl;

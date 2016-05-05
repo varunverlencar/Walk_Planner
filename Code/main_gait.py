@@ -121,6 +121,7 @@ if __name__ == "__main__":
 	
 	q = 1
 	baseleg = [0,1,2]
+	BiRRT = 1
 
 	# goalconfig = [[-.05,-0.35,0.17,.17,.35,-0.3]]
 	# startconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
@@ -179,10 +180,10 @@ if __name__ == "__main__":
 			
 			if (q):
 				q =1
-				initConfig =  startconfig[m] + goalconfig[m] + goalbias + stepsize + baseleg
+				initConfig =  startconfig[m] + goalconfig[m] + goalbias + stepsize + baseleg + [BiRRT]
 				a = time.time()
 				print "Planning Started"
-				path = plannermodule.SendCommand('gaitplanner %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f end'%tuple(initConfig))
+				path = plannermodule.SendCommand('gaitplanner %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f end'%tuple(initConfig))
 				a = time.time()-a
 				print '\n time:', a
 				

@@ -53,6 +53,9 @@ public:
             sinput >> goal;
             baseleg.push_back(goal);
         }
+
+        int biflag=0;
+        sinput >> biflag;
                 
 
         std::vector<int> indices;
@@ -82,7 +85,7 @@ public:
         // NodeTree *Final_Path= new NodeTree();
         // Final_Path = Final_Path->rrtgrow(startconfig,goalconfig,goalbias,upper,lower,env,robot);
         NodeTree a;
-        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot,baseleg);
+        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot,baseleg,biflag);
         
         std::vector<std::vector<float> > temp;
         // std::vector<float>::const_iterator it;
