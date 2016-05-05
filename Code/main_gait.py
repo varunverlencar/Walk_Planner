@@ -243,7 +243,7 @@ if __name__ == "__main__":
 			namer = 'right'
 		else:
 			namer = 'left'
-		print footsteps[i][0]-footsteps[i-1][0],'\n'
+		# print footsteps[i][0]-footsteps[i-1][0],'\n'
 		g = randomGoalIk(footsteps[i][0]-footsteps[i-1][0],0,namer)
 		# print g[0]
 		goalconfig.append(g[0])
@@ -263,10 +263,8 @@ if __name__ == "__main__":
 	left_foot_orient = 0 # for dynamic walking
 	right_foot_orient = 0
 	foot_orient = 0 #for static walking
+	_smoothPath = []; nodes =[]; lowerlimit=[];upperlimit=[];_unsmoothPath =[]
 	
-	next_foot = 0
-	stepsize = [0.25]
-	goalbias = [0.26]
 	
 	##call gaitplanner with above goals
 	## stride = gaitplanner(init_pose,goal_footsteps)
@@ -275,9 +273,12 @@ if __name__ == "__main__":
 	# startconfig = [[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.30],[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.30]]
 	# goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.30],[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.30],[0,0,0,0,0,0]]
 	
+	next_foot = 0
+	stepsize = [0.25]
+	goalbias = [0.26]
 	q = 1
 	baseleg = [0,1,2]
-	BiRRT = 1
+	BiRRT = 0
 
 	plannermodule = RaveCreateModule(env,'plannermodule')
 	
@@ -291,8 +292,8 @@ if __name__ == "__main__":
 				baseleg = [0,1,2]
 				flag = False				
 				next_foot = 5	
-				f1 = open('Leftfoot.txt', 'a'); 
-				f1.write("\n\nPlan")		
+				f1 = open('RRT/Leftfoot1.txt', 'a'); 
+				f1.write("\n\nPlan\n")		
 				if zp !=1:
 					env.Add(robot)
 					env.Remove(robot2)	
@@ -318,11 +319,12 @@ if __name__ == "__main__":
 				T[2,3] = TR[2]
 				T[3,3] = TR[3]
 				robot.SetTransform(T)
-				f1 = open('Rightfoot.txt', 'a');
-				f1.write("\n\nPlan")
+				f1 = open('RRT/Rightfoot1.txt', 'a');
+				f1.write("\n\nPlan\n")
 
 			dof =robot.GetDOFValues(indices)
 			DOF = [dof[0],dof[1],dof[2],dof[3],dof[4],dof[5]]
+			
 			# goalconfig = [[-.05,-0.35,0.17,.17,.35,-0.3]]
 			# startconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
 
@@ -351,28 +353,46 @@ if __name__ == "__main__":
 				print '\n time:', a
 				
 
-				_unsmoothPath = []; nodes =[]; lowerlimit=[];upperlimit=[]
-
 				if path is None:
 					raveLogWarn('command failed!')
 				else:
-					nodes = path.split(';')
+					# nodes = path.split(';')
+					bisect = path.split(';');
+					cuta = bisect[0].split(',')
+					cutb = bisect[1].split(',')
 					# print 'lenghth',len(nodes)
 
-					# for i in lines[:-1]:
-					for i in range(0,len(nodes)-1):
-						d = nodes[i].split()
-						_unsmoothPath.append([float(x) for x in d])
-						# for x in d:
-						#     print x,","
-						# print "\n"
+					for i in range(0,len(cuta)-1):
+						frag=cuta[i].split();
+						frag=[float(i) for i in frag];
+						_unsmoothPath.append(frag);
 
-				# print 'Smooth length',len(_unsmoothPath)
+					for i in range(0,len(cutb)-1):
+						frag=cutb[i].split();
+						frag=[float(i) for i in frag];
+						_smoothPath.append(frag);
+
+					numNodes = len(_unsmoothPath)
+
+					# for i in lines[:-1]:
+					# for i in range(0,len(nodes)-1):
+					# 	d = nodes[i].split()
+					# 	_smoothPath.append([float(x) for x in d])
+					# 	# for x in d:
+					# 	#     print x,","
+					# 	# print "\n"
 				
 				lowerlimit,upperlimit = robot.GetDOFLimits(indices)
 
-				handles1=[]
+				handles2=[]
 				for i in (_unsmoothPath):
+					arr=array([i[0],i[1],i[2],i[3],i[4],i[5]])
+					robot.SetActiveDOFValues(arr)
+					pt=robot.GetManipulator('foot').GetTransform()[0:3,3]
+					handles2.append(env.plot3(pt,pointsize=0.025,colors=array(((1,0,0))),drawstyle=1))
+
+				handles1=[]
+				for i in (_smoothPath):
 					# for k in range(0,len(i)-1):
 					# 	if (i[k] != goalconfig[m][k]):
 					# 		if (i[k] < lowerlimit[k]):
@@ -383,16 +403,24 @@ if __name__ == "__main__":
 					robot.SetDOFValues(arr,indices)
 					pt=robot.GetManipulator('foot').GetTransform()[0:3,3]
 					handles1.append(env.plot3(pt,pointsize=0.03,colors=array(((0,0,1))),drawstyle=1))
-				env.UpdatePublishedBodies() 
+				# env.UpdatePublishedBodies() 
 
 				traj = RaveCreateTrajectory(env,'')
 				traj.Init(robot.GetActiveConfigurationSpecification())		
 
-				for j in range(0,len(_unsmoothPath)):
-					traj.Insert(j,_unsmoothPath[j])
-					pp = ['Node']+[j]+_unsmoothPath[j]
+				for j in range(0,len(_smoothPath)):
+					traj.Insert(j,_smoothPath[j])
+					pp = ['Node']+[j]+_smoothPath[j]
 					f1.write(str(pp))
 					f1.write("\n")
+				f1.write(str('Computation Time:'))
+				f1.write(str(a))
+				f1.write(str('	Nodes:'))
+				f1.write(str(numNodes))
+				f1.write(str('	Bias:'))
+				f1.write(str(goalbias))
+				f1.write(str('	Step Size:'))
+				f1.write(str(stepsize))
 				f1.close()
 					
 

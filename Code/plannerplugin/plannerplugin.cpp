@@ -24,13 +24,11 @@ public:
         RobotBasePtr robot;
         RobotBasePtr robot1;
         std::vector<RobotBasePtr> pr2;
+        unsigned int imp=0;
 
         env->GetRobots(pr2);
-
-
         robot = pr2[0];
-        std::cout<<" Gait Planning1..."<<std::endl;
-               
+        std::cout<<" Gait Planning1..."<<std::endl;             
         
 
         float start, goal, goalbias = .26, stepsize;
@@ -87,7 +85,7 @@ public:
         // NodeTree *Final_Path= new NodeTree();
         // Final_Path = Final_Path->rrtgrow(startconfig,goalconfig,goalbias,upper,lower,env,robot);
         NodeTree a;
-        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot,baseleg,biflag);
+        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot,baseleg,biflag,imp);
         
         std::vector<std::vector<float> > temp;
         // std::vector<float>::const_iterator it;
@@ -100,7 +98,13 @@ public:
                 sout << " ";
 
             }
-            sout << ";";
+            if (j!=(imp-1)){
+                sout << ",";
+            }
+            else{
+                sout << ";";
+            }
+            // sout << ";";
             
         }
 

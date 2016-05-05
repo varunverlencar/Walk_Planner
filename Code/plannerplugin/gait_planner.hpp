@@ -266,7 +266,7 @@ public:
 	///////////////////// Grow RRT tree /////////////////////
 
 
-	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start_temp,const std::vector<float> &goal_temp,float goalbias,float stepsize,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot,std::vector<float> baseleg,int Bi)
+	std::vector< std::vector<float> > rrtgrow(const std::vector<float> &start_temp,const std::vector<float> &goal_temp,float goalbias,float stepsize,std::vector<float> upper,std::vector<float> lower,OpenRAVE::EnvironmentBasePtr env, OpenRAVE::RobotBasePtr robot,std::vector<float> baseleg,int Bi,unsigned int& imp)
 	{	
 		std::vector<float> goal,start;
 		for (int i=0; i<6; i++){					// Finding joint incdices from joint names
@@ -305,6 +305,7 @@ public:
 		std::cout<<std::endl<<"Start:"<<start[0]<<","<<start[1]<<","<<start[2]<<","<<start[3]<<","<<start[4]<<","<<start[5]<<std::endl;
 
 		if (Bi == 0){
+			std::cout<<"....RRT-Connect..."<<std::endl<<"...Planning..."<<std::endl;
 			dist = getNearestDistance(start,goal);
 			std::vector<float> node;	//get disance from goal
 			nearestNode = initPath->nearestNeighbour(startNode,initPath);
@@ -384,6 +385,8 @@ public:
 	}
 	//////////////////////BiRRT Planning//////////////////////////////////////////////////
 	else{
+		std::cout<<"....Bi-RRT..."<<std::endl<<"...Planning..."<<std::endl;
+
 		dist = approach_dist(start, goal_tree);
 		std::vector<float> node,gnode;	//get disance from goal
 		std::cout<<std::endl<<"Bi-Goal Distance:"<<dist<<std::endl;
@@ -401,9 +404,9 @@ public:
 				std::vector<float> targetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
 				prevNode = nearestNode;											//nearest node becomes parent for next node
 				ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
-				std::cout<<std::endl<<"Bi-NearestDistance1:"<<ndist<<std::endl;
+				// std::cout<<std::endl<<"Bi-NearestDistance1:"<<ndist<<std::endl;
 
-				if(ndist <= threshold){											//if within stepsize add to the initial tree
+				if(ndist <= threshold*.75){											//if within stepsize add to the initial tree
 					currentNode  = new RRTNode(targetNodeConfig, prevNode);
 					initPath->addNode(currentNode);
 					prevNode = currentNode;	
@@ -413,9 +416,9 @@ public:
 					}
 				}
 				else{
-					while(ndist > threshold){
-						std::cout<<std::endl<<"Bi-Distance:"<<dist<<std::endl;
-						std::cout<<std::endl<<"Bi-NearestDistance2:"<<ndist<<std::endl;
+					while(ndist > threshold*.75){
+						// std::cout<<std::endl<<"Bi-Distance:"<<dist<<std::endl;
+						// std::cout<<std::endl<<"Bi-NearestDistance2:"<<ndist<<std::endl;
 						
 						node = connect(nearestNodeConfig,targetNodeConfig,stepsize); //updated step from nearest node of tree towards target
 						nearestNodeConfig = node;
@@ -433,7 +436,7 @@ public:
 								// nodeNum-=1;
 								break;	}//if collision
 
-							if(ndist <= threshold){	// if close to the sampled target add
+							if(ndist <= threshold*.75){	// if close to the sampled target add
 								currentNode  = new RRTNode(targetNodeConfig, prevNode);
 								initPath->addNode(currentNode);
 								prevNode = currentNode;
@@ -459,13 +462,13 @@ public:
 				std::vector<float> gtargetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
 				ndist = getNearestDistance(gtargetNodeConfig,gnearestNodeConfig);
 
-				if(ndist <= threshold){											//if within stepsize add to the initial tree
+				if(ndist <= threshold*.75){											//if within stepsize add to the initial tree
 					break;
 				}
 				else{
-					while(ndist > threshold){
-						std::cout<<std::endl<<"G-Distance:"<<dist<<std::endl;
-						std::cout<<std::endl<<"G-NearestDistance:"<<ndist<<std::endl;
+					while(ndist > threshold*.75){
+						// std::cout<<std::endl<<"G-Distance:"<<dist<<std::endl;
+						// std::cout<<std::endl<<"G-NearestDistance:"<<ndist<<std::endl;
 						
 						gnode = connect(gnearestNodeConfig,gtargetNodeConfig,stepsize); //updated step from nearest node of tree towards target
 						gnearestNodeConfig = gnode;
@@ -511,26 +514,21 @@ public:
 	}
 
 	///////////////////////completed planning////////////////////
-		
-
+		imp = finalpathconfig.size();
+		std::cout<<" ...Nodes: "<<imp<<std::endl;
 		for(it=finalpathconfig.back().begin(); it!=finalpathconfig.back().end(); ++it){
 			std::cout<<"final Node:"<<(*it)<<std::endl;
 		}
 
-		if (finalpathconfig.size() > 5){
-			std::cout<<" ...Smoothing.."<<std::endl;
-			smoothened = smoothpath(finalpathconfig,stepsize,env,robot);		//shortcut smoothened path
-			std::cout<<" ...Smoothing Complete..."<<std::endl;
-			_final_path.reserve(finalpathconfig.size() + smoothened.size()); // preallocate memory
-			// _final_path.insert( _final_path.end(), finalpathconfig.begin(), finalpathconfig.end());	//if req, unsmoothened path
-			_final_path.insert(_final_path.end(), smoothened.begin(), smoothened.end());
-		}
-		else{
-			_final_path.reserve(finalpathconfig.size()); // preallocate memory
-			_final_path.insert( _final_path.end(), finalpathconfig.begin(), finalpathconfig.end());	//if req, unsmoothened path
-			// _final_path.insert(_final_path.end(), smoothened.begin(), smoothened.end());
-		}
-		std::cout<<"...Final Size..."<<finalpathconfig.size()<<std::endl;
+		std::cout<<" ...Smoothing.."<<std::endl;
+		smoothened = smoothpath(finalpathconfig,stepsize,env,robot);		//shortcut smoothened path
+		std::cout<<" ...Smoothing Complete..."<<std::endl;
+
+		_final_path.reserve(finalpathconfig.size() + smoothened.size()); // preallocate memory
+		_final_path.insert( _final_path.end(), finalpathconfig.begin(), finalpathconfig.end());	//if req, unsmoothened path
+		_final_path.insert(_final_path.end(), smoothened.begin(), smoothened.end());
+		
+		std::cout<<"...Smotthended Size..."<<finalpathconfig.size()<<std::endl;
 		
 		return _final_path;
 	}
