@@ -4,6 +4,8 @@
 
 using namespace OpenRAVE;
 
+#define PI 3.14159265358979323846
+
 class plannermodule : public ModuleBase
 {
 public:
@@ -64,12 +66,12 @@ public:
         indices = robot->GetActiveDOFIndices();        
         robot->GetDOFLimits(lowerlimit,upperlimit,indices);
 
-        lowerlimit[0]= -3.1416/4; upperlimit[0]= 3.1416/4;
-        lowerlimit[1]= -3.1416/2; upperlimit[1]= 0.0;
-        lowerlimit[2]= -3.1416/2; upperlimit[2]= 3.1416/2;
-        lowerlimit[3]= 3.1416/2; upperlimit[3]= -3.1416/2;
-        lowerlimit[4]= 0.0; upperlimit[4]= -3.1416/2;
-        lowerlimit[5]= 3.1416/2; upperlimit[5]= -3.1416/4;
+        lowerlimit[0]= -PI/4; upperlimit[0]= PI/4;
+        lowerlimit[1]= -PI/2; upperlimit[1]= 0.0;
+        lowerlimit[2]= -PI/2; upperlimit[2]= PI/2;
+        lowerlimit[3]= PI/2; upperlimit[3]= -PI/2;
+        lowerlimit[4]= 0.0; upperlimit[4]= -PI/2;
+        lowerlimit[5]= PI/2; upperlimit[5]= -PI/4;
 
         // for(int i=0; i<6; ++i){
 

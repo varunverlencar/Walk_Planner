@@ -4,8 +4,10 @@ Main implementation of Bipedal Gait trajectory
 """
 import time
 import openravepy
-
-# import "IKSolver_v1"
+from copy import deepcopy
+from math import sin,cos,acos,asin,pow,sqrt,atan2
+from math import degrees as d
+import random
 
 if not __openravepy_build_doc__:
 	from openravepy import *
@@ -35,8 +37,8 @@ def randomGoalIk(x,z,baseFoot):
 		 t012 = t01+t2
 		 
 		 if ((t012 > 0.349066) or (t012 < -0.349066)):
-			 print('Chair angle fail')
-			 print('')
+			 # print('Chair angle fail')
+			 # print('')
 			 continue
 		 l = 62.0
 		 
@@ -44,7 +46,7 @@ def randomGoalIk(x,z,baseFoot):
 		 xhip = l*sin(t0) + l*sin(t01)
 		 zhip = l*cos(t0) + l*cos(t01)
 		 
-		 print('hip', xhip,zhip)
+		 # print('hip', xhip,zhip)
 		 direction = 1.0
 		 if (baseFoot == 'left'):
 			 direction = 1.0
@@ -60,7 +62,7 @@ def randomGoalIk(x,z,baseFoot):
 		 xNew = deepcopy(zNew)
 		 zNew = -1.0*deepcopy(copyX)
 		 
-		 print('new s',xNew,zNew)
+		 # print('new s',xNew,zNew)
 		 phi = 0.0 #total angle constrant to define third joint of swing leg, based in rotated reference frame
 		 
 		 
@@ -72,7 +74,7 @@ def randomGoalIk(x,z,baseFoot):
 		 
 		 #check that desired point is withing workspace of swing leg
 		 if (dist > 124.0):
-			 print('dist fail')
+			 # print('dist fail')
 			 continue
 		
 		 #calculate angle of knee joint
@@ -93,40 +95,40 @@ def randomGoalIk(x,z,baseFoot):
 		 
 		 
 		 #print values
-		 print('in joints', d(t0),d(t1),d(t2))
-		 print('calculated joints',d(t3),d(t4),d(t5))
-		 print('updated joints', d(t0),d(t1),d(t2),d(t3Real),d(t4Real),d(t5Real))
-		 print('fk', l*cos(t3)+l*cos(t3+t4),l*sin(t3)+l*sin(t3+t4))
-		 print('gamma inner',(x2 + z2 + ls - ls)/(2*l*sqrt(x2 + z2)))
-		 print('gamma', gamma)
-		 print('beta', beta)
+		 # print('in joints', d(t0),d(t1),d(t2))
+		 # print('calculated joints',d(t3),d(t4),d(t5))
+		 # print('updated joints', d(t0),d(t1),d(t2),d(t3Real),d(t4Real),d(t5Real))
+		 # print('fk', l*cos(t3)+l*cos(t3+t4),l*sin(t3)+l*sin(t3+t4))
+		 # print('gamma inner',(x2 + z2 + ls - ls)/(2*l*sqrt(x2 + z2)))
+		 # print('gamma', gamma)
+		 # print('beta', beta)
 		 
 		 #check that all joint constraints are met
 		 if ( (t3Real < -1.0*pi/2) or (t3Real > 1.0*pi/2)):
-			 print('t3fail')
-			 print('')
+			 # print('t3fail')
+			 # print('')
 			 continue
 		 
 		 if ( (t4Real < 0) or (t3Real > 1.0*pi/2)): #opposite of ik direction
-			 print('t4fail')
-			 print('')
+			 # print('t4fail')
+			 # print('')
 			 continue
 			 
 		 if ( (t5Real < -1.0*pi/4) or (t3Real > 1.0*pi/4)): #opposite of ik direction
-			 print('t5fail')
-			 print('')
+			 # print('t5fail')
+			 # print('')
 			 continue
 		 
 		 if ((t0+t1+t2+t3Real+t4Real+t5Real) != 0):
-			 print('tAllfail')
-			 print('')
+			 # print('tAllfail')
+			 # print('')
 			 continue
 		 
 		 
 		 #return random-calculated succesful joints for desired pose
 		 break
-	print('')
-	return [t0, t1, t2, t3Real, t4Real, t5Real]
+	# print [[t0, t1, t2, t3Real, t4Real, t5Real],[l*cos(t0)+l*cos(t0+t1),l*sin(t0)+l*sin(t0+t1)]]
+	return [[t0, t1, t2, t3Real, t4Real, t5Real],[l*cos(t0)+l*cos(t0+t1),l*sin(t0)+l*sin(t0+t1)]]
 
 if __name__ == "__main__":
 
@@ -137,7 +139,7 @@ if __name__ == "__main__":
 	# load a scene
 	env.Load('plannerplugin/scenes/basicMap_V2.env.xml')
 	time.sleep(0.1)
-	robot2 = env.ReadRobotXMLFile('plannerplugin/robots/LegChair_RightBased_V5.robot.xml')
+	robot2 = env.ReadRobotXMLFile('plannerplugin/robots/LegChair_RightBased_V3.robot.xml')
 	# robot2 = env.ReadRobotXMLFile('robots/puma.robot.xml')
 
 
@@ -158,17 +160,21 @@ if __name__ == "__main__":
 	# robot.GetController().SetDesired(robot.GetDOFValues());
 	# waitrobot(robot)
 
-	footsteps = get_footsteps()
-	
-	left_footsteps = footsteps[0]
-	right_footsteps = footsteps[1]
+	with open('footsteps.txt') as f:
+		footsteps = [[0,0,0,0,0,0]]
+		for line in f:
+			line = line.split() # to deal with blank 
+			if line:	# lines (ie skip them)
+				line = [float(i) for i in line]
+				footsteps.append(line)
+	print footsteps
+		
+	# left_footsteps = footsteps[0]
+	# right_footsteps = footsteps[1]
 	planned_gait = []
-	starting_foot = get_init_foot()#???? int 0=left, 5 = right
-	#get foot
+	starting_foot = get_init_foot()
 
-	# lfoot = robot.GetLinks()[0]
-	# rfoot = robot.GetLinks()[5]
-	Tgoal = None
+	Tgoal = None	
 	active_foot = None
 	flag = True
 	zp = 1
@@ -212,22 +218,56 @@ if __name__ == "__main__":
 	# 			time.sleep(10.0/len(sols))
 
 
-	goalconfig =[];startconfig = []
+	goalconfig =[];startconfig = [[0,0,0,0,0,0]]
+	tt = 1
+	ttt =1
+	tttt =1
 
 	########### Find IK solution #############
-	# g = randomGoalIk(x,z,baseFoot)
-	# goalconfig = goalconfig + g
+	# while(tt):
+	# 	g = randomGoalIk(1.452,0,'left')[0]
+	# 	pos = randomGoalIk(1.452,0,'left')[1]
+	# 	if (abs(pos[0] - 0.4 <0.5) and ttt):
+	# 		goalconfig = goalconfig.append(g)
+	# 		ttt =0
+	# 		print goalconfig
+	# 	elif (abs(pos[0] - 1.452 <0.5) and tttt):
+			# tttt= 0
+	# 	elif (ttt == 0 and tttt==0):
+	# 		tt = 0
+	namer = 'left'
+	for i in range(1,len(footsteps)):
+		# if (i ==0):
+		# 	namer = 'left'
+		if(i%2 ==0):
+			namer = 'right'
+		else:
+			namer = 'left'
+		print footsteps[i][0]-footsteps[i-1][0],'\n'
+		g = randomGoalIk(footsteps[i][0]-footsteps[i-1][0],0,namer)
+		# print g[0]
+		goalconfig.append(g[0])
+		startconfig.append(g[0])
+	# print goalconfig
+		
+	# for i in range(0,len(goalconfig)):
+	# 	with env:
+	# 		robot1.SetActiveDOFs([robot1.GetJoint(name).GetDOFIndex() for name in jointnames])
+	# 		robot1.SetActiveDOFValues(goalconfig[i]);
+	# 		env.UpdatePublishedBodies() # allow viewer to update new robot
+	# 		time.sleep(5.0/len(goalconfig))
+
 
 
 	########### Plan Gait #############
 	left_foot_orient = 0 # for dynamic walking
 	right_foot_orient = 0
 	foot_orient = 0 #for static walking
-	goal_footstep = None
+	
 	next_foot = 0
 	stepsize = [0.25]
 	goalbias = [0.26]
-
+	
 	##call gaitplanner with above goals
 	## stride = gaitplanner(init_pose,goal_footsteps)
 	## planned_gait.append(stride)
@@ -237,21 +277,8 @@ if __name__ == "__main__":
 	
 	q = 1
 	baseleg = [0,1,2]
-	BiRRT = 0
+	BiRRT = 1
 
-	# goalconfig = [[-.05,-0.35,0.17,.17,.35,-0.3]]
-	# startconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
-
-	s = [[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.3],[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25]]
-	g = [[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.3],[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0]]
-
-	startconfig = [[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.3]] + s + s + s +s
-	goalconfig = g + g + g + g + g
-
-	# g = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3]]
-	# s = [[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05]]
-	# goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3]]+g +g+g
-	# startconfig = [[0,0,0,0,0,0],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05]]+s+s+s
 	plannermodule = RaveCreateModule(env,'plannermodule')
 	
 	for m in range(0,len(goalconfig)): #remove -1 for continuos steps
@@ -276,9 +303,7 @@ if __name__ == "__main__":
 					T[2,3] = TR[2]
 					T[3,3] = TR[3]								
 					robot.SetTransform(T)	
-													
-				
-				
+						
 			else:
 				robot = robot2	
 				# baseleg = [5,4,3]	
@@ -294,9 +319,24 @@ if __name__ == "__main__":
 				T[3,3] = TR[3]
 				robot.SetTransform(T)
 				f1 = open('Rightfoot.txt', 'a');
-				f1.write("\n\nPlan")								
-				
-			
+				f1.write("\n\nPlan")
+
+			dof =robot.GetDOFValues(indices)
+			DOF = [dof[0],dof[1],dof[2],dof[3],dof[4],dof[5]]
+			# goalconfig = [[-.05,-0.35,0.17,.17,.35,-0.3]]
+			# startconfig = [[.3,-0.35,-0.17,-.17,.35,0.05]]
+
+			# s = [[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.3],[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25]]
+			# g = [[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.3],[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0]]
+
+			# startconfig = [[0,0,0,0,0,0],[.25,-0.15,-0.1,-.1,-.15,0.25],[0,0,0,0,0,0],[-0.05,-0.35,0.17,.17,.35,-0.3]] + s + s + s +s
+			# goalconfig = g + g + g + g + g
+
+			g = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3]]
+			s = [[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05]]
+			goalconfig = [[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3]]+g +g+g
+			startconfig = [DOF,[.3,-0.35,-0.17,-.17,.35,0.05],[-0.05,-0.35,0.17,.17,.35,-0.3],[.3,-0.35,-0.17,-.17,.35,0.05]]+s+s+s
+	
 			env.UpdatePublishedBodies() 
 			robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])
 			robot.SetActiveDOFValues(startconfig[m]);
