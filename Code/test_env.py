@@ -66,6 +66,9 @@ if __name__ == "__main__":
         # print indices
         PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
         PR2.SetDOFValues([.3,-0.35,-0.17,-.17,.35,0.05],indices) # set the first 6 dof values
+        lowerlimit, upperlimit = PR2.GetDOFLimits(indices);
+        # for i in range(0,len(lowerlimit)):
+        #     print lowerlimit[i], upperlimit[i]
         # PR2.GetLinks()[0].SetTransform()
         # print PR2.GetLinks()[0].GetTransform()
         ################

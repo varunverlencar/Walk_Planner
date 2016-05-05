@@ -34,6 +34,7 @@ public:
         float start, goal, goalbias = .26, stepsize;
         std::vector<float> startconfig;
         std::vector<float> goalconfig;
+        std::vector<float> baseleg;
 
         for(int i=0; i<6; i++){
             sinput >> start;
@@ -47,18 +48,27 @@ public:
 
         sinput >> goalbias;
         sinput >> stepsize;
+
+        for(int i=0; i<3; i++){
+            sinput >> goal;
+            baseleg.push_back(goal);
+        }
+                
+
         std::vector<int> indices;
         std::vector<OpenRAVE::dReal> upperlimit,lowerlimit;
         
         indices = robot->GetActiveDOFIndices();        
         robot->GetDOFLimits(lowerlimit,upperlimit,indices);
 
-        // lowerlimit[4]= -3.14;
-        // upperlimit[4]= 3.14;
-        // lowerlimit[6]= -3.14;
-        // upperlimit[6]= 3.14;
+        lowerlimit[0]= -3.1416/4; upperlimit[0]= 3.1416/4;
+        lowerlimit[1]= -3.1416/2; upperlimit[1]= 0.0;
+        lowerlimit[2]= -3.1416/2; upperlimit[2]= 3.1416/2;
+        lowerlimit[3]= 3.1416/2; upperlimit[3]= -3.1416/2;
+        lowerlimit[4]= 0.0; upperlimit[4]= -3.1416/2;
+        lowerlimit[5]= 3.1416/2; upperlimit[5]= -3.1416/4;
 
-        // for(int i=0; i<7; ++i){
+        // for(int i=0; i<6; ++i){
 
         //     std::cout<<"indices"<<" "<<indices[i]<<std::endl;
         //     std::cout<<"lowerlimit"<<i<<" "<<lowerlimit[i]<<std::endl;
@@ -72,11 +82,11 @@ public:
         // NodeTree *Final_Path= new NodeTree();
         // Final_Path = Final_Path->rrtgrow(startconfig,goalconfig,goalbias,upper,lower,env,robot);
         NodeTree a;
-        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot);
+        pathConfigs  = a.rrtgrow(startconfig,goalconfig,goalbias,stepsize,upper,lower,env,robot,baseleg);
         
         std::vector<std::vector<float> > temp;
-        std::vector<float>::const_iterator it;
-        std::vector<float>::const_iterator iit;
+        // std::vector<float>::const_iterator it;
+        // std::vector<float>::const_iterator iit;
 
                 
         for (unsigned int j=0; j<pathConfigs.size(); j++){
