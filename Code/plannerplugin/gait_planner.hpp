@@ -197,11 +197,10 @@ public:
 		// std::cout<<"Entered getNearestDistance..."<<std::endl;
 		float tempdist = 0;
 		// float w[6] = {600.0, 400.0, 120.0, 100, 200.0, 600.0};
-		// float w[6] = {3.0, 1.0, 1.0, 1, 1.0, 5.0};
-		float w[6] = {5.0, 1.0, 1.0, 1, 1.0, 5.0};
+		float w[6] = {3.0, 10.0, 5.0, 5, 10.0, 3.0};
+		// float w[6] = {5.0, 1.0, 1.0, 1, 1.0, 5.0};
 		// float w[6] = {1,1,1,1,1,1};
-		for (unsigned int i = 0;i<newconfig.size();++i)
-		{
+		for (unsigned int i = 0;i<newconfig.size();++i)	{
 			tempdist += w[i]*pow((newconfig[i] - existingNodeConfig[i]),2);
 		}
 		tempdist = std::sqrt(tempdist);
@@ -222,17 +221,17 @@ public:
 		float r = rand()/(float)RAND_MAX; //  r is between 0 and 1 since we normalize it
 		// std::cout<<"random r:"<<r<<std::endl;
 
-		if (r < .1){//p->goalBias()
+		if (r < .26){//p->goalBias()
 			// std::cout<<"Goal as Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(true);
-			goalflag=true;
+			// goalflag=true;
 			return goalNode;
 		}
 
 		else {
 			// std::cout<<"Getting Random Sample...:"<<std::endl<<std::endl;
 			// p->setgoalflag(false);
-			goalflag =false;
+			// goalflag =false;
 			bool t = 0;
 			// while(!t){
 				for (int i = 0; i < 6; ++i){
@@ -273,14 +272,12 @@ public:
 		setGoalBias(goalbias);
 		setStepSize(stepsize);
 		setgoalthreshold(1);
-		// srand (static_cast <unsigned> (time(0)));
+		srand (static_cast <unsigned> (time(0)));
 		float dist=100,ndist =10;
 		RRTNode* startNode = new RRTNode(start);
 		RRTNode* goalNode = new RRTNode(goal);
 		NodeTree* initPath = new NodeTree(startNode);
-		// initPath->_numNodes =1;
-		
-		// NodeTree* path= new NodeTree();
+	
 		NodeTree* finalPath = new NodeTree();
 		NodeTree* source_path = new NodeTree();
 		NodeTree* dest_path = new NodeTree();
@@ -293,8 +290,6 @@ public:
 
 		std::vector<std::vector<float> > _final_path,finalpathconfig,smoothened;
 		
-		// initPath->setgoalflag(false);
-		// goalflag = false; //not needed
 
 		std::vector<float>::const_iterator it;
 		std::cout<<std::endl<<"Given:"<<std::endl<<"Goal:"<<goal[0]<<","<<goal[1]<<","<<goal[2]<<","<<goal[3]<<","<<goal[4]<<","<<goal[5]<<std::endl;
@@ -310,17 +305,13 @@ public:
 			// float ndist = getNearestDistance(start,goal);
 			while(dist > threshold){	//if distance from goal is greater than set threshold
 			
-				std::cout<<std::endl<<"Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
+				// std::cout<<std::endl<<"Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
 				i++;
 				RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode,baseleg);
 
 				if(!checkifCollision(sampledNode->getConfig(),env,robot)){	//check for collision
 					nearestNode = initPath->nearestNeighbour(sampledNode,initPath);
 					std::vector<float> nearestNodeConfig(nearestNode->getConfig().begin(),nearestNode->getConfig().end());
-					// std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<"]"<<std::endl;
-					// std::cout<<"Nearest Node found..."<<std::endl;
-					
-					// path = initPath->connectNodes(sampledNode, nearestNode, goalNode,initPath->stepSize(),env,robot);
 					std::vector<float> targetNodeConfig(sampledNode->getConfig().begin(),sampledNode->getConfig().end());
 					prevNode = nearestNode;	//nearest node becomes parent for next node
 					ndist = getNearestDistance(targetNodeConfig,nearestNodeConfig);	//get distance of nearest node from sampled target
@@ -335,7 +326,7 @@ public:
 					}
 					else{
 						while(ndist > threshold){
-							std::cout<<std::endl<<"Distance:"<<dist<<std::endl;
+							// std::cout<<std::endl<<"Distance:"<<dist<<std::endl;
 							std::cout<<std::endl<<"NearestDistance:"<<ndist<<std::endl;
 							node = nearestNodeConfig;
 							node = connect(nearestNodeConfig,targetNodeConfig,stepsize); //updated step from nearest node of tree towards target
@@ -394,11 +385,9 @@ public:
 		std::vector<float> node,gnode;	//get disance from goal
 		std::cout<<std::endl<<"Bi-Goal Distance:"<<dist<<std::endl;
 
-		int i=0; int threshold = 2;
-		// float ndist = getNearestDistance(start,goal);
-		while(dist > threshold){	//if distance from goal is greater than set threshold
-		// while (ndist > .5){
-			// std::cout<<std::endl<<"RRT-iteration"<<i<<std::endl;
+		int i=0; int threshold = 1;
+
+		while(dist > threshold){	//if distance from goal is greater than set threshold'
 			std::cout<<std::endl<<"Bi-Distance:"<<dist<<"threshold-"<<goalthreshold()<<std::endl;
 			i++;
 			RRTNode* sampledNode = initPath->getRamdomSample(upper,lower,goalNode,baseleg);

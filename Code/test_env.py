@@ -65,7 +65,7 @@ if __name__ == "__main__":
         indices = [PR2.GetJoint(name).GetDOFIndex() for name in jointnames]
         # print indices
         PR2.SetActiveDOFs([PR2.GetJoint(name).GetDOFIndex() for name in jointnames])
-        PR2.SetDOFValues([.3,-0.35,-0.17,-.17,.35,0.05],indices) # set the first 6 dof values
+        PR2.SetDOFValues([.25,-0.15,-0.1,-.1,-.15,0.25],indices) # set the first 6 dof values
         lowerlimit, upperlimit = PR2.GetDOFLimits(indices);
         # for i in range(0,len(lowerlimit)):
         #     print lowerlimit[i], upperlimit[i]
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         # PR22.SetActiveDOFs([PR22.GetJoint(name).GetDOFIndex() for name in jointnames])
         # # PR22.SetTranslation3D(T)
         # PR22.SetTransform(T)
-        PR22.SetDOFValues([-.05,-0.35,0.17,.17,.35,-0.3],indices)
+        PR22.SetDOFValues([.25,-0.15,-0.1,-.1,-.15,0.25],indices)
 
         # TR = PR22.GetManipulator('foot').GetTransform()[0:4,3]
         # # print TR
