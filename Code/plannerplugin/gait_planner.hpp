@@ -156,16 +156,7 @@ public:
 			}
 		}
 
-		// RRTNode* p = _nodes[nearestindex];
-
-		// std::vector<float> nn(_nodes[nearestindex]->getConfig().begin(),_nodes[nearestindex]->getConfig().end());
-		// std::cout<<"Nearest node at:"<<nearestindex<<" Distance of:"<<dist<<std::endl;
-		// std::cout<<"Nearest found:["<<nn[0]<<","<<nn[1]<<","<<nn[2]<<","<<nn[3]<<","<<nn[4]<<","<<nn[5]<<","<<nn[6]<<"]"<<std::endl;
-
-		// std::vector<float>::const_iterator it;
-		// for(it=_nodes[nearestindex]->getConfig().begin(); it!=_nodes[nearestindex]->getConfig().end(); ++it){
-		// 	std::cout<<"Nearest found:"<<(*it)<<std::endl;
-		// }
+		
 		return tree->_nodes[nearestindex];
 	}
 
